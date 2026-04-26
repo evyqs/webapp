@@ -256,6 +256,12 @@
         </div>
     </div>
 
+        <div class="admin-tab" onclick="switchAdmin('adm-tickets', this)">Тикеты</div>
+...
+<div id="adm-tickets" style="display:none;">
+    <div id="admin-tickets-list"></div>
+</div>
+
 <div id="tab-support" class="tab-content">
     <h2>Техподдержка</h2>
     <div class="card">
@@ -622,6 +628,16 @@ async function sendTicketMessage() {
     loadTickets();
 }
 
+        async function loadAdminTickets() {
+    const d = await apiFetch("/api/admin/tickets");
+    document.getElementById('admin-tickets-list').innerHTML = d.tickets.map(t => `
+        <div class="card">
+            <b>Тикет #${t.id} - ${t.user_name}</b>
+            <p>${t.last_message}</p>
+            <button class="btn" onclick="openUserModal({id: ${t.user_id}, name: '${t.user_name}'})">Ответить</button>
+        </div>
+    `).join('');
+}
 // Вызывай loadTickets() при переключении на вкладку
 
         // Запуск
