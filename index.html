@@ -81,12 +81,31 @@
         </div>
     </div>
 
-    <div id="tab-shop" class="tab-content">
-        <h2>Магазин</h2>
+   <div id="tab-shop" class="tab-content">
+        <h2 style="margin-top: 0;">Выберите тариф</h2>
+        
+        <div class="card" style="border: 1px solid var(--accent-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0;">🚀 Премиум (1 мес.)</h3>
+                <span style="background: var(--accent-color); color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;">ХИТ</span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-top: 0;">Безлимитный трафик, 5 локаций</p>
+            <div style="font-size: 24px; font-weight: bold; margin-bottom: 15px;">150 ₽</div>
+            <button class="copy-btn" style="width: 100%; padding: 15px;" onclick="buyTariff(1, 150)">Оплатить</button>
+        </div>
+
         <div class="card">
-            <h3>Тариф Премиум</h3>
-            <p style="color: var(--text-secondary)">30 дней — 299₽</p>
-            <button class="copy-btn" style="width: 100%; padding: 15px;" onclick="tg.showAlert('Оплата будет доступна скоро!')">Купить</button>
+            <h3 style="margin: 0; margin-bottom: 10px;">💎 Премиум (3 мес.)</h3>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-top: 0;">Скидка 10%</p>
+            <div style="font-size: 24px; font-weight: bold; margin-bottom: 15px;">400 ₽</div>
+            <button class="copy-btn" style="width: 100%; padding: 15px; background: #2c2c2e; color: #fff;" onclick="buyTariff(3, 400)">Оплатить</button>
+        </div>
+        
+        <div class="card">
+            <h3 style="margin: 0; margin-bottom: 10px;">👑 Премиум (Год)</h3>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-top: 0;">Максимальная выгода</p>
+            <div style="font-size: 24px; font-weight: bold; margin-bottom: 15px;">1200 ₽</div>
+            <button class="copy-btn" style="width: 100%; padding: 15px; background: #2c2c2e; color: #fff;" onclick="buyTariff(12, 1200)">Оплатить</button>
         </div>
     </div>
 
