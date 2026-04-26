@@ -464,36 +464,72 @@
 }
 
         async function loadData() {
-            try {
-                const r = await apiFetch(`/api/init`);
-                if (!r.ok) return;
-                const d = await r.json();
-                
-                document.getElementById('user-name').innerText = d.user.name;
-                document.getElementById('avatar').innerText = d.user.name[0].toUpperCase();
-                
-                if (d.user.is_banned) {
-                    document.getElementById('banned-alert').style.display = 'block'; 
-                    document.getElementById('key-card').style.display = 'none';
-                    document.getElementById('status-sub').innerHTML = `<span class="status-badge expired">Забанен</span>`;
-                } else {
-                    document.getElementById('status-sub').innerHTML = d.user.is_active ? 
-                        `<span class="status-badge">До ${d.user.expiry}</span>` : 
-                        `<span class="status-badge expired">Истекла</span>`;
-                    document.getElementById('vless-key').value = d.user.key || "";
-                    document.getElementById('btn-gen-key').innerText = d.user.key ? "Обновить" : "Создать ключ";
-                }
+    const tg = window.Telegram.WebApp;
 
-                document.getElementById('stat-up').innerText = d.stats.up + " MB"; 
-                document.getElementById('stat-down').innerText = d.stats.down + " MB";
-                document.getElementById('ref-count').innerText = d.ref.count; 
-                document.getElementById('ref-link').value = d.ref.link;
-                
-                if (d.user.is_admin) { 
-                    document.getElementById('nav-admin').style.display = 'flex'; 
-                }
-            } catch(e) { console.error(e); }
+    // 1. Сообщаем Telegram, что приложение загрузилось
+    tg.ready();
+    
+    // Показываем индикатор загрузки (фирменный телеграмовский)
+    tg.MainButton.showProgress();
+
+    // 2. Получаем данные авторизации
+    const initData = tg.initData;
+
+    if (!initData) {
+        console.error("InitData пуст. Запустите через Telegram!");
+        alert("Ошибка: Данные Telegram не найдены.");
+        tg.MainButton.hideProgress();
+        return;
+    }
+
+    // Твой актуальный адрес (порт 8443 и HTTPS)
+    const API_URL = "https://babatsiki.ru:8443/api/init";
+
+    try {
+        // 3. Выполняем запрос
+        const response = await fetch(API_URL, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                // Передаем данные в заголовке Authorization
+                "Authorization": initData 
+            }
+        });
+
+        // Проверяем, что ответ вообще пришел (защита от той самой ошибки undefined)
+        if (!response) {
+            throw new Error("Сервер не прислал ответ (Response undefined)");
         }
+
+        // 4. Обрабатываем ответ сервера
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Данные получены успешно:", data);
+            
+            // ТУТ ТВОЯ ЛОГИКА ОТРИСОВКИ (например, отображение баланса или конфига)
+            // renderInterface(data);
+            
+        } else {
+            // Если сервер ответил ошибкой (401, 404, 500 и т.д.)
+            const errorText = await response.text();
+            console.error("Ошибка сервера:", response.status, errorText);
+            alert(`Ошибка сервера (${response.status}): ${errorText}`);
+        }
+
+    } catch (error) {
+        // Ловим сетевые ошибки (порт закрыт, нет интернета, SSL не валиден)
+        console.error("Сетевая ошибка:", error);
+        alert("Не удалось связаться с сервером. Проверьте, открыт ли порт 8443!");
+    } finally {
+        // В любом случае убираем индикатор загрузки
+        tg.MainButton.hideProgress();
+    }
+}
+
+// Вызываем функцию при загрузке страницы
+window.onload = () => {
+    loadData();
+};
 
         // Вкладки
         function switchTab(id, el) { 
