@@ -819,14 +819,13 @@ function testMobileConnection() {
     const API_URL = "https://ВАША-ССЫЛКА.ngrok-free.app/api/init";
 
     // 3. Делаем запрос
-    fetch(API_URL, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true", // ПРОБИВАЕМ ЗАГЛУШКУ NGROK
-            "Authorization": "Bearer " + initData // ВАШ ТОКЕН
-        }
-    })
+    fetch("https://a2c9e03916412d.lhr.life/api/init", {
+    method: "GET",
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + initData
+    }
+})
     .then(async (response) => {
         // Если сервер ответил, но с ошибкой (например, 403 или 404)
         if (!response.ok) {
