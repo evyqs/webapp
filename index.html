@@ -6,329 +6,135 @@
     <title>VPN Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Системные цвета Telegram */
         :root {
-            --bg-color: var(--tg-theme-bg-color, #1c1c1d);
-            --text-color: var(--tg-theme-text-color, #ffffff);
-            --hint-color: var(--tg-theme-hint-color, #8e8e93);
-            --button-color: var(--tg-theme-button-color, #007aff);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
+            --bg-color: #000;
+            --card-bg: #1c1c1e;
+            --accent-color: #007aff;
+            --text-main: #ffffff;
+            --text-secondary: #8e8e93;
+            --success: #30d158;
         }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            color: var(--text-main);
+            margin: 0; padding: 16px;
+            overflow-x: hidden;
         }
+        /* Карточки */
+        .card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+        .profile-header { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 50px; height: 50px; background: var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+        
+        /* Статус */
+        .status-badge { background: rgba(48, 209, 88, 0.1); color: var(--success); padding: 12px; border-radius: 12px; text-align: center; font-weight: 600; margin-top: 15px; border: 1px solid rgba(48, 209,  green, 0.2); }
+        
+        /* Ключ */
+        .key-container { background: #2c2c2e; border-radius: 12px; display: flex; align-items: center; padding: 10px; margin-top: 10px; }
+        .key-container input { background: transparent; border: none; color: var(--text-secondary); flex: 1; font-family: monospace; outline: none; }
+        .copy-btn { background: var(--accent-color); color: #fff; border: none; border-radius: 8px; padding: 8px 15px; font-weight: 600; }
 
-        /* Контейнер для страниц */
-        .content {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            padding-bottom: 80px; /* Отступ для нижнего меню */
-        }
+        /* Статистика */
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-item { background: var(--card-bg); padding: 15px; border-radius: 16px; display: flex; flex-direction: column; }
+        .stat-label { color: var(--text-secondary); font-size: 12px; margin-bottom: 5px; }
+        .stat-value { font-size: 18px; font-weight: bold; }
 
-        /* Скрываем неактивные страницы */
-        .page {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h1 { font-size: 24px; margin-top: 0; margin-bottom: 5px; }
-        p.subtitle { color: var(--hint-color); font-size: 14px; margin-bottom: 25px; }
-
-        /* Стили Профиля */
-        .profile-card {
-            background-color: var(--secondary-bg);
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .profile-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: var(--button-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            font-weight: bold;
-        }
-
-        .status-box {
-            background-color: rgba(48, 209, 88, 0.1);
-            color: #30d158;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
-        /* Стили Магазина (из прошлого шага) */
-        .tariffs-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .tariff-card {
-            background-color: var(--secondary-bg);
-            border: 2px solid transparent;
-            border-radius: 16px;
-            padding: 20px 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .tariff-card:active { transform: scale(0.96); }
-        .tariff-card.active {
-            border-color: var(--button-color);
-            background-color: rgba(0, 122, 255, 0.1);
-        }
-
-        .tariff-months { font-size: 28px; font-weight: bold; margin-bottom: 5px; }
-        .tariff-label { font-size: 14px; color: var(--hint-color); margin-bottom: 15px; }
-        .tariff-price { font-size: 18px; font-weight: 600; color: var(--button-color); }
-        .discount {
-            background-color: #ff3b30; color: white; font-size: 11px;
-            padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 10px;
-        }
-
-        /* Нижнее навигационное меню */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--secondary-bg);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0 20px 0;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            border-top: 1px solid rgba(128, 128, 128, 0.2);
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--hint-color);
-            cursor: pointer;
-            font-size: 12px;
-            gap: 5px;
-            width: 33%;
-        }
-
-        .nav-item.active {
-            color: var(--button-color);
-        }
-
-        .nav-icon { font-size: 24px; }
+        /* Навигация */
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(28, 28, 30, 0.8); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #333; }
+        .nav-item { color: var(--text-secondary); text-decoration: none; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: var(--accent-color); }
+        .tab-content { display: none; padding-bottom: 80px; }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
 
-    <div class="content">
-        <div id="page-profile" class="page active">
-            <h1>Профиль</h1>
-            <div class="profile-card">
-                <div class="profile-avatar" id="user-avatar">👤</div>
-                <div>
-                    <div style="font-size: 18px; font-weight: bold;" id="user-name">Загрузка...</div>
-                    <div style="font-size: 14px; color: var(--hint-color);" id="user-id">ID: ...</div>
-                </div>
-            </div>
-
-            <div class="status-box">
-                🟢 Ваш VPN работает отлично!<br>
-                <span style="font-size: 12px; font-weight: normal; color: var(--text-color);">Осталось: 0 дней (Тестовый режим)</span>
-            </div>
-            
-            <p style="color: var(--hint-color); font-size: 14px; text-align: center;">
-                Перейдите в раздел "Магазин", чтобы продлить подписку.
-            </p>
-        </div>
-
-        <div id="page-shop" class="page">
-            <h1>Магазин</h1>
-            <p class="subtitle">Выберите выгодный тариф</p>
-            <div class="tariffs-grid">
-                <div class="tariff-card" data-months="1" data-price="150">
-                    <div class="tariff-months">1</div><div class="tariff-label">месяц</div><div class="tariff-price">150 ₽</div>
-                </div>
-                <div class="tariff-card" data-months="3" data-price="400">
-                    <div class="discount">-11%</div><div class="tariff-months">3</div><div class="tariff-label">месяца</div><div class="tariff-price">400 ₽</div>
-                </div>
-                <div class="tariff-card" data-months="6" data-price="750">
-                    <div class="discount">-16%</div><div class="tariff-months">6</div><div class="tariff-label">месяцев</div><div class="tariff-price">750 ₽</div>
-                </div>
-                <div class="tariff-card" data-months="12" data-price="1200">
-                    <div class="discount">-33%</div><div class="tariff-months">12</div><div class="tariff-label">месяцев</div><div class="tariff-price">1200 ₽</div>
-                </div>
+    <div id="tab-profile" class="tab-content active">
+        <div class="profile-header">
+            <div class="avatar" id="avatar">?</div>
+            <div>
+                <div id="user-name" style="font-size: 20px; font-weight: bold;">Загрузка...</div>
+                <div id="user-id" style="color: var(--text-secondary); font-size: 14px;">ID: ---</div>
             </div>
         </div>
 
-        <div id="page-info" class="page">
-            <h1>Помощь</h1>
-            <p>Здесь будет инструкция по настройке VPN, ссылки на скачивание приложений (WireGuard/V2Ray) и контакты техподдержки.</p>
-            <div style="background: var(--secondary-bg); padding: 15px; border-radius: 12px; text-align: center; margin-top: 20px;">
-                💬 Написать в поддержку
+        <div class="status-badge" id="status-text">Подписка активна</div>
+
+        <div class="card" style="margin-top: 20px;">
+            <div style="font-size: 14px; margin-bottom: 8px;">Ключ для подключения (VLESS)</div>
+            <div class="key-container">
+                <input type="text" id="vless-key" value="..." readonly>
+                <button class="copy-btn" onclick="copyKey()">Копировать</button>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-item">
+                <span class="stat-label">📥 Скачано</span>
+                <span class="stat-value" id="stat-down">0.0 MB</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">📤 Отдано</span>
+                <span class="stat-value" id="stat-up">0.0 MB</span>
             </div>
         </div>
     </div>
 
-    <nav class="bottom-nav">
-        <div class="nav-item active" data-target="page-profile">
-            <div class="nav-icon">👤</div>
-            <span>Профиль</span>
+    <div id="tab-shop" class="tab-content">
+        <h2>Магазин</h2>
+        <div class="card">
+            <h3>Тариф Премиум</h3>
+            <p style="color: var(--text-secondary)">30 дней — 299₽</p>
+            <button class="copy-btn" style="width: 100%; padding: 15px;" onclick="tg.showAlert('Оплата будет доступна скоро!')">Купить</button>
         </div>
-        <div class="nav-item" data-target="page-shop">
-            <div class="nav-icon">🛒</div>
-            <span>Магазин</span>
-        </div>
-        <div class="nav-item" data-target="page-info">
-            <div class="nav-icon">ℹ️</div>
-            <span>Помощь</span>
-        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <a href="#" class="nav-item active" onclick="switchTab('tab-profile', this)"><span>👤</span>Профиль</a>
+        <a href="#" class="nav-item" onclick="switchTab('tab-shop', this)"><span>🛒</span>Магазин</a>
+        <a href="#" class="nav-item" onclick="tg.close()"><span>❌</span>Выйти</a>
     </nav>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        const tg = window.Telegram.WebApp;
+        const API_URL = "https://heroism-parasite-denim.ngrok-free.dev/api/init"; // ЗАМЕНИ МЕНЯ
 
-        // 1. ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ ИЗ TELEGRAM
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('user-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-            document.getElementById('user-id').innerText = 'ID: ' + user.id;
-            // Делаем аватарку из первой буквы имени
-            document.getElementById('user-avatar').innerText = user.first_name.charAt(0).toUpperCase();
-        } else {
-            document.getElementById('user-name').innerText = "Гость";
-        }
-
-        // 2. ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ВЛАДОК (НАВИГАЦИЯ)
-        const navItems = document.querySelectorAll('.nav-item');
-        const pages = document.querySelectorAll('.page');
-
-        navItems.forEach(item => {
-            item.addEventListener('click', () => {
-                // Прячем главную кнопку Telegram, если ушли из магазина
-                tg.MainButton.hide(); 
-
-                // Обновляем активную кнопку меню
-                navItems.forEach(nav => nav.classList.remove('active'));
-                item.classList.add('active');
-
-                // Переключаем страницы
-                const targetId = item.getAttribute('data-target');
-                pages.forEach(page => {
-                    if (page.id === targetId) {
-                        page.classList.add('active');
-                    } else {
-                        page.classList.remove('active');
-                    }
+        async function loadData() {
+            try {
+                const response = await fetch(API_URL, {
+                    headers: { 'Authorization': tg.initData }
                 });
+                const data = await response.json();
 
-                // Если вернулись в магазин и тариф уже выбран - показываем кнопку снова
-                if (targetId === 'page-shop' && selectedTariff) {
-                    tg.MainButton.show();
-                }
-            });
-        });
-
-        // 3. ЛОГИКА ВЫБОРА ТАРИФА (Осталась прежней)
-        let selectedTariff = null;
-        const cards = document.querySelectorAll('.tariff-card');
-
-        cards.forEach(card => {
-            card.addEventListener('click', () => {
-                cards.forEach(c => c.classList.remove('active'));
-                card.classList.add('active');
-                
-                selectedTariff = {
-                    months: parseInt(card.dataset.months),
-                    price: parseInt(card.dataset.price)
-                };
-
-                tg.MainButton.text = `Оплатить ${selectedTariff.price} ₽`;
-                tg.MainButton.color = tg.themeParams.button_color || "#007aff";
-                tg.MainButton.show();
-            });
-        });
-
-        // 4. ОТПРАВКА ДАННЫХ БОТУ
-        tg.MainButton.onClick(() => {
-            if (selectedTariff) {
-                tg.sendData(JSON.stringify({
-                    action: 'buy_subscription',
-                    months: selectedTariff.months,
-                    price: selectedTariff.price
-                }));
-            }
-        });
-    </script>
-
-const API_URL = "https://heroism-parasite-denim.ngrok-free.dev/api/init";
-
-async function loadUserData() {
-    const initData = window.Telegram.WebApp.initData;
-    
-    try {
-        const response = await fetch(`${API_URL}/user_info`, {
-            headers: {
-                'Authorization': initData
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            
-            // Обновляем UI данными из нашей базы!
-            document.getElementById('user-name').innerText = data.name;
-            document.getElementById('user-id').innerText = 'ID: ' + data.id;
-            
-            if (data.is_active) {
-                const date = new Date(data.subscription_end).toLocaleDateString();
-                document.querySelector('.status-box').innerHTML = `🟢 Подписка активна до ${date}`;
-            } else {
-                document.querySelector('.status-box').innerHTML = `🔴 Подписка не активна`;
-                document.querySelector('.status-box').style.color = "#ff3b30";
+                document.getElementById('user-name').innerText = data.user.name;
+                document.getElementById('user-id').innerText = 'ID: ' + data.user.id;
+                document.getElementById('avatar').innerText = data.user.name.charAt(0);
+                document.getElementById('status-text').innerText = 'Активна до ' + data.user.expiry;
+                document.getElementById('vless-key').value = data.user.key;
+                document.getElementById('stat-up').innerText = data.stats.up + ' MB';
+                document.getElementById('stat-down').innerText = data.stats.down + ' MB';
+            } catch (e) {
+                tg.showAlert("Ошибка связи с сервером");
             }
         }
-    } catch (error) {
-        console.error("Ошибка загрузки данных:", error);
-    }
-}
 
-// Вызываем при старте
-tg.ready();
-loadUserData();
+        function switchTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
 
+        function copyKey() {
+            const input = document.getElementById('vless-key');
+            navigator.clipboard.writeText(input.value);
+            tg.showScanQrPopup({text: "Ключ скопирован!"}); // Просто для эффекта
+            setTimeout(() => tg.closeScanQrPopup(), 1000);
+        }
+
+        tg.expand();
+        loadData();
+    </script>
 </body>
 </html>
