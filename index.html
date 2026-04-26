@@ -183,13 +183,20 @@
         let adminUsersData = [];
 
         // 🛡 Вытаскиваем токен авторизации надежным способом
+        // 🛡 СВЕРХ-АГРЕССИВНЫЙ ПОИСК ТОКЕНА
         function getInitData() {
-            let data = tg.initData;
-            if (!data) {
-                const urlParams = new URLSearchParams(window.location.hash.slice(1));
-                data = urlParams.get('tgWebAppData');
+            // 1. Стандартный способ Телеграма
+            if (tg.initData) return tg.initData;
+
+            // 2. Ручной поиск по всему URL (если браузер искривил ссылку)
+            const fullUrl = window.location.href;
+            if (fullUrl.includes('tgWebAppData=')) {
+                // Вырезаем токен силой прямо из текста ссылки
+                const raw = fullUrl.split('tgWebAppData=')[1].split('&')[0];
+                return decodeURIComponent(raw);
             }
-            return data;
+            
+            return null;
         }
 
         // 🛡 УЛЬТИМАТИВНАЯ ФУНКЦИЯ ЗАПРОСОВ: Токен летит в URL (никаких 403 на телефонах)
