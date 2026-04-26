@@ -13,11 +13,11 @@
         .btn-secondary { background: #27272a; color: var(--text); }
         .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--red); }
         .nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(11,11,12,0.9); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid #27272a; z-index: 100;}
-        .nav-item { color: var(--text-dim); text-decoration: none; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item { color: var(--text-dim); text-decoration: none; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; border:none; background:none; cursor:pointer;}
         .nav-item.active { color: var(--accent); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .admin-nav { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 15px; }
+        .admin-nav { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
         .admin-tab { padding: 8px 12px; background: #27272a; border-radius: 8px; font-size: 12px; white-space: nowrap; cursor: pointer; }
         .admin-tab.active { background: var(--accent); }
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: #064e3b; color: var(--green); }
@@ -27,22 +27,17 @@
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; padding: 20px; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
         .modal-content { background: var(--card); padding: 20px; border-radius: 16px; width: 100%; max-width: 400px; border: 1px solid #27272a; max-height: 80vh; overflow-y: auto;}
-.step-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; font-size: 14px; }
-.step-num { 
-    background: var(--accent); color: white; min-width: 24px; height: 24px; 
-    border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-    font-weight: bold; font-size: 12px; 
-}
-.download-area { 
-    display: flex; justify-content: space-between; align-items: center; 
-    background: #0f172a; padding: 12px; border-radius: 12px; margin-top: 15px;
-}
-.app-info { display: flex; align-items: center; gap: 10px; }
-.app-logo { width: 32px; height: 32px; border-radius: 8px; }
-        .chat-container { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding: 10px; background: #0f172a; border-radius: 12px; margin-bottom: 10px; }
-.msg { padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 13px; line-height: 1.4; }
-.msg.user { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 2px; }
-.msg.admin { align-self: flex-start; background: var(--card); color: var(--text); border-bottom-left-radius: 2px; border: 1px solid #27272a; }
+        
+        /* ЧАТ */
+        .chat-container { display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; padding: 10px; background: #0f172a; border-radius: 12px; margin-bottom: 10px; border: 1px solid #1e293b; }
+        .msg { padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 13px; line-height: 1.4; position: relative; }
+        .msg.user { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 2px; }
+        .msg.admin { align-self: flex-start; background: var(--card); color: var(--text); border-bottom-left-radius: 2px; border: 1px solid #27272a; }
+        
+        /* ГАЙДЫ */
+        .step-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; font-size: 14px; }
+        .step-num { background: var(--accent); color: white; min-width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+        .download-area { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px; border-radius: 12px; margin-top: 15px; border: 1px solid #1e293b; }
     </style>
 </head>
 <body>
@@ -58,7 +53,7 @@
 
         <div id="banned-alert" class="card" style="display: none; border-color: var(--red); background: rgba(239,68,68,0.1);">
             <h3 style="color: var(--red); margin: 0;">🚫 Вы заблокированы</h3>
-            <p style="margin: 5px 0 0; font-size: 13px; color: var(--text-dim);">Доступ к сети ограничен администратором.</p>
+            <p style="margin: 5px 0 0; font-size: 13px; color: var(--text-dim);">Доступ ограничен администратором.</p>
         </div>
 
         <div class="card" id="key-card">
@@ -68,582 +63,270 @@
                 <button class="btn" onclick="copyKey()">Копировать</button>
                 <button class="btn btn-secondary" onclick="generateKey()" id="btn-gen-key">Сбросить</button>
             </div>
-            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="checkStatus()">🔍 Статус подключения (Сервер)</button>
+            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="checkStatus()">🔍 Статус соединения</button>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div class="card"><span style="color: var(--text-dim); font-size: 12px;">📥 Скачано</span><br><b style="font-size: 18px;" id="stat-down">0 MB</b></div>
-            <div class="card"><span style="color: var(--text-dim); font-size: 12px;">📤 Отдано</span><br><b style="font-size: 18px;" id="stat-up">0 MB</b></div>
+            <div class="card"><span style="color: var(--text-dim); font-size: 12px;">📥 Скачано</span><br><b id="stat-down">0 MB</b></div>
+            <div class="card"><span style="color: var(--text-dim); font-size: 12px;">📤 Отдано</span><br><b id="stat-up">0 MB</b></div>
         </div>
 
         <div class="card">
-            <h3 style="margin: 0 0 10px 0;">🎁 Партнерская программа</h3>
-            <p style="font-size: 13px; color: var(--text-dim); margin-top:0;">Приглашено: <b id="ref-count">0</b> чел.</p>
+            <h3>🎁 Рефералы</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-top:0;">Приглашено: <b id="ref-count">0</b></p>
             <input type="text" id="ref-link" readonly>
-            <button class="btn btn-secondary" onclick="copyRef()">Поделиться ссылкой</button>
+            <button class="btn btn-secondary" onclick="copyRef()">Копировать ссылку</button>
         </div>
     </div>
 
-    <<div id="tab-shop" class="tab-content">
+    <div id="tab-shop" class="tab-content">
         <h2>Магазин подписок</h2>
-        
         <div class="card">
             <h3>🚀 1 месяц</h3>
             <b style="font-size: 20px;">250 ₽</b>
             <button class="btn" onclick="buy(1, 250)">Оплатить</button>
         </div>
-
         <div class="card" style="border-color: var(--accent);">
             <span class="status-badge" style="float:right; background: var(--accent);">ВЫГОДА 10%</span>
             <h3>💎 3 месяца</h3>
             <span style="text-decoration: line-through; color: var(--text-dim); font-size: 14px;">750 ₽</span>
-            <b style="font-size: 20px; display: block; margin-bottom: 5px;">675 ₽</b>
-            <p style="font-size: 12px; color: var(--green); margin: 0;">Экономия: 75 ₽</p>
+            <b style="font-size: 20px; display: block;">675 ₽</b>
             <button class="btn" onclick="buy(3, 675)">Оплатить</button>
         </div>
-
         <div class="card">
             <span class="status-badge" style="float:right; background: #6d28d9;">ВЫГОДА 20%</span>
             <h3>🌟 6 месяцев</h3>
             <span style="text-decoration: line-through; color: var(--text-dim); font-size: 14px;">1500 ₽</span>
-            <b style="font-size: 20px; display: block; margin-bottom: 5px;">1200 ₽</b>
-            <p style="font-size: 12px; color: var(--green); margin: 0;">Экономия: 300 ₽</p>
+            <b style="font-size: 20px; display: block;">1200 ₽</b>
             <button class="btn" onclick="buy(6, 1200)">Оплатить</button>
         </div>
-
         <div class="card" style="border: 2px solid var(--green);">
             <span class="status-badge" style="float:right;">ВЫГОДА 30%</span>
             <h3>👑 12 месяцев</h3>
             <span style="text-decoration: line-through; color: var(--text-dim); font-size: 14px;">3000 ₽</span>
-            <b style="font-size: 20px; display: block; margin-bottom: 5px;">2100 ₽</b>
-            <p style="font-size: 12px; color: var(--green); margin: 0;">Экономия: 900 ₽</p>
+            <b style="font-size: 20px; display: block;">2100 ₽</b>
             <button class="btn" onclick="buy(12, 2100)">Оплатить</button>
         </div>
     </div>
 
     <div id="tab-help" class="tab-content">
-    <h2 style="margin-bottom: 20px;">Настройка подключения</h2>
-    
-    <div class="card" onclick="showGuide('ios')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:15px;">
-            <span style="font-size:24px;">🍏</span>
-            <div><b>iOS (iPhone, iPad)</b><br><small style="color:var(--text-dim)">Рекомендуем FoXray</small></div>
+        <h2>Настройка</h2>
+        <div class="card" onclick="showGuide('ios')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+            <span>🍏 iOS (FoXray)</span><span>❯</span>
         </div>
-        <span>❯</span>
+        <div class="card" onclick="showGuide('android')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+            <span>🤖 Android (v2rayNG)</span><span>❯</span>
+        </div>
+        <div class="card" onclick="showGuide('pc')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+            <span>💻 PC (Win/Mac)</span><span>❯</span>
+        </div>
     </div>
 
-    <div class="card" onclick="showGuide('android')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:15px;">
-            <span style="font-size:24px;">🤖</span>
-            <div><b>Android</b><br><small style="color:var(--text-dim)">Рекомендуем v2rayNG</small></div>
+    <div id="tab-support" class="tab-content">
+        <h2>Техподдержка</h2>
+        <div class="card">
+            <div id="chat-box" class="chat-container"></div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="support-input" placeholder="Ваш вопрос..." style="margin:0;">
+                <button class="btn" style="margin:0; width:auto;" onclick="sendTicketMessage()">🚀</button>
+            </div>
         </div>
-        <span>❯</span>
     </div>
-
-    <div class="card" onclick="showGuide('pc')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:15px;">
-            <span style="font-size:24px;">💻</span>
-            <div><b>Desktop (Win/Mac)</b><br><small style="color:var(--text-dim)">v2rayN или V2RayU</small></div>
-        </div>
-        <span>❯</span>
-    </div>
-
-    <button class="btn btn-secondary" style="margin-top: 20px;" onclick="tg.sendData('support'); tg.close();">🆘 Связаться с поддержкой</button>
-</div>
-
-<div class="modal" id="guide-modal">
-    <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 id="guide-title" style="margin:0;">Инструкция</h3>
-            <span onclick="closeGuide()" style="cursor:pointer; font-size:24px;">×</span>
-        </div>
-        <div id="guide-steps"></div>
-        <div id="guide-download"></div>
-        <button class="btn" style="margin-top:20px;" onclick="closeGuide()">Понятно</button>
-    </div>
-</div>
 
     <div id="tab-admin" class="tab-content">
-        <h2>Управление</h2>
+        <h2>Админ-центр</h2>
         <div class="admin-nav">
-            <div class="admin-tab active" onclick="switchAdmin('adm-users', this)">Пользователи</div>
+            <div class="admin-tab active" onclick="switchAdmin('adm-users', this)">Юзеры</div>
+            <div class="admin-tab" onclick="switchAdmin('adm-tickets', this)">Тикеты</div>
             <div class="admin-tab" onclick="switchAdmin('adm-mass', this)">Рассылка</div>
-            <div class="admin-tab" onclick="switchAdmin('adm-server', this)">Сервер & Статика</div>
+            <div class="admin-tab" onclick="switchAdmin('adm-server', this)">Сервер</div>
         </div>
 
         <div id="adm-users">
-            <select id="user-filter" onchange="renderUsers()">
-                <option value="all">Все пользователи</option>
-                <option value="active">С подпиской</option>
-                <option value="inactive">Без подписки</option>
-            </select>
+            <select id="user-filter" onchange="renderUsers()"><option value="all">Все</option><option value="active">Активные</option></select>
             <div id="user-list-container"></div>
         </div>
-        
+
+        <div id="adm-tickets" style="display:none;">
+            <div id="admin-tickets-list"></div>
+        </div>
+
         <div id="adm-mass" style="display:none;">
             <div class="card">
-                <select id="bc-target">
-                    <option value="all">Всем пользователям</option>
-                    <option value="active">Только с подпиской</option>
-                    <option value="inactive">Только без подписки</option>
-                </select>
-                <select id="bc-template" onchange="applyTemplate()">
-                    <option value="manual">Написать вручную</option>
-                    <option value="discount">Акция / Скидка</option>
-                    <option value="maintenance">Тех. работы</option>
-                    <option value="update">Обновление ключей</option>
-                </select>
-                <textarea id="bc-text" rows="6" placeholder="Текст рассылки..."></textarea>
-                <input type="text" id="bc-btn-name" placeholder="Текст на кнопке (необязательно)">
-                <input type="text" id="bc-btn-url" placeholder="URL ссылки (начинается с http...)">
-                <button class="btn" onclick="sendBroadcast()">Отправить рассылку</button>
+                <textarea id="bc-text" rows="4" placeholder="Текст рассылки..."></textarea>
+                <button class="btn" onclick="sendBroadcast()">Запустить рассылку</button>
             </div>
         </div>
 
         <div id="adm-server" style="display:none;">
-    <div class="card" style="font-family: monospace; font-size: 11px; color: var(--green);" id="server-stats"></div>
-    
-    <div style="display: flex; gap: 10px;">
-        <button class="btn btn-secondary" 
-            onclick="if(confirm('Перезапустить службу X-UI? Соединения могут прерваться на пару секунд.')) apiAction('server','restart-xui','0')">
-            🔄 Рестарт X-UI
-        </button>
-        
-        <button class="btn btn-danger" 
-            onclick="if(confirm('⚠️ ВНИМАНИЕ: Вы уверены, что хотите ПЕРЕЗАГРУЗИТЬ сервер? Все пользователи будут отключены до полного запуска VPS.')) apiAction('server','reboot','0')">
-            ⚠️ Ребут VPS
-        </button>
+            <div class="card" id="server-stats" style="font-family:monospace; font-size:11px; color:var(--green);"></div>
+            <button class="btn btn-secondary" onclick="if(confirm('Рестарт X-UI?')) apiAction('server','restart-xui','0')">🔄 Рестарт X-UI</button>
+            <button class="btn btn-danger" onclick="if(confirm('РЕБУТ VPS?')) apiAction('server','reboot','0')">⚠️ Ребут VPS</button>
+        </div>
     </div>
 
-    <h3 style="margin-top:20px;">Статические профили</h3>
-    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <input type="text" id="new-static-name" placeholder="Имя профиля (например: Laptop-Home)">
-        <button class="btn" style="margin:0; width: auto;" onclick="createStatic()">Создать</button>
-    </div>
-    <div id="static-list"></div>
-</div>
+    <div class="modal" id="guide-modal">
+        <div class="modal-content">
+            <h3 id="guide-title"></h3>
+            <div id="guide-steps"></div>
+            <div id="guide-download"></div>
+            <button class="btn" onclick="closeGuide()">Закрыть</button>
+        </div>
     </div>
 
     <div class="modal" id="user-modal">
         <div class="modal-content">
-            <h3 id="um-name" style="margin-top: 0;">User Name</h3>
+            <h3 id="um-name"></h3>
             <input type="hidden" id="um-id">
-            
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 5px;">Управление временем (+ / -):</p>
             <div class="grid-4">
-                <input type="number" id="um-m" placeholder="Мес" value="0">
-                <input type="number" id="um-d" placeholder="Дни" value="0">
-                <input type="number" id="um-h" placeholder="Час" value="0">
-                <input type="number" id="um-min" placeholder="Мин" value="0">
+                <input type="number" id="um-m" placeholder="М">
+                <input type="number" id="um-d" placeholder="Д">
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" style="background: var(--green);" onclick="manageTime('add')">Добавить</button>
-                <button class="btn btn-danger" onclick="manageTime('remove')">Отнять</button>
-            </div>
-            
-            <hr style="border: 0; border-top: 1px solid #27272a; margin: 15px 0;">
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 5px;">Отправка данных:</p>
-            <button class="btn btn-secondary" onclick="promptReceipt()">🧾 Отправить чек</button>
-            <button class="btn btn-secondary" onclick="promptEmail()">📧 Отправить ключ на Email</button>
-            
-            <hr style="border: 0; border-top: 1px solid #27272a; margin: 15px 0;">
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 5px;">Ключ пользователя:</p>
-            <input type="text" id="um-key" readonly onclick="navigator.clipboard.writeText(this.value); tg.showAlert('Ключ скопирован!');">
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-danger" id="um-ban-btn" onclick="toggleBan()">Бан</button>
-                <button class="btn btn-secondary" onclick="closeModal()">Закрыть</button>
-            </div>
+            <button class="btn" onclick="manageTime('add')">Добавить время</button>
+            <button class="btn btn-danger" id="um-ban-btn" onclick="toggleBan()">Бан</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Закрыть</button>
         </div>
     </div>
-
-        <div class="admin-tab" onclick="switchAdmin('adm-tickets', this)">Тикеты</div>
-...
-<div id="adm-tickets" style="display:none;">
-    <div id="admin-tickets-list"></div>
-</div>
-
-<div id="tab-support" class="tab-content">
-    <h2>Техподдержка</h2>
-    <div class="card">
-        <div id="chat-box" class="chat-container">
-            <p style="text-align:center; color:var(--text-dim);">Загрузка сообщений...</p>
-        </div>
-        <div style="display: flex; gap: 8px;">
-            <input type="text" id="support-input" placeholder="Ваш вопрос..." style="margin:0;">
-            <button class="btn" style="margin:0; width:auto; padding:0 15px;" onclick="sendTicketMessage()">Отправить</button>
-        </div>
-    </div>
-</div>
 
     <nav class="nav">
-        <a href="#" class="nav-item active" onclick="switchTab('tab-profile', this)"><span>👤</span>Профиль</a>
-        <a href="#" class="nav-item" onclick="switchTab('tab-shop', this)"><span>🛒</span>Магазин</a>
-        <a href="#" class="nav-item" onclick="switchTab('tab-help', this)"><span>❓</span>Помощь</a>
-        <a href="#" class="nav-item" onclick="switchTab('tab-support', this)"><span>💬</span>Поддержка</a>
-        <a href="#" id="nav-admin" class="nav-item" style="display: none;" onclick="switchTab('tab-admin', this)"><span>⚙️</span>Админ</a>
+        <button class="nav-item active" onclick="switchTab('tab-profile', this)">👤 Профиль</button>
+        <button class="nav-item" onclick="switchTab('tab-shop', this)">🛒 Магазин</button>
+        <button class="nav-item" onclick="switchTab('tab-support', this)">💬 Помощь</button>
+        <button id="nav-admin" class="nav-item" style="display:none;" onclick="switchTab('tab-admin', this)">⚙️ Админ</button>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         const API = "https://heroism-parasite-denim.ngrok-free.dev"; 
-        
         let adminUsersData = [];
 
-        // 🛡 Вытаскиваем токен авторизации надежным способом
-        // 🛡 СВЕРХ-АГРЕССИВНЫЙ ПОИСК ТОКЕНА
         function getInitData() {
-            // 1. Стандартный способ Телеграма
             if (tg.initData) return tg.initData;
-
-            // 2. Ручной поиск по всему URL (если браузер искривил ссылку)
-            const fullUrl = window.location.href;
-            if (fullUrl.includes('tgWebAppData=')) {
-                // Вырезаем токен силой прямо из текста ссылки
-                const raw = fullUrl.split('tgWebAppData=')[1].split('&')[0];
-                return decodeURIComponent(raw);
-            }
-            
-            return null;
+            const urlParams = new URLSearchParams(window.location.hash.slice(1));
+            return urlParams.get('tgWebAppData');
         }
 
-        // 🛡 УЛЬТИМАТИВНАЯ ФУНКЦИЯ ЗАПРОСОВ: Токен летит в URL (никаких 403 на телефонах)
-        // 🛡 УЛЬТИМАТИВНАЯ ФУНКЦИЯ ЗАПРОСОВ С ЖУЧКОМ
-        function apiFetch(path, options = {}) {
+        async function apiFetch(path, options = {}) {
             const authData = getInitData();
-            
-            if (!authData) {
-                // ВЫВОДИМ ПОЛНУЮ ССЫЛКУ НА ЭКРАН ТЕЛЕФОНА!
-                tg.showAlert("🔴 ДЕБАГ ССЫЛКИ:\n\n" + window.location.href);
-                throw new Error("No initData");
-            }
-            
-            const url = `${API}${path}?auth=${encodeURIComponent(authData)}`;
-            options.headers = { 
-                ...options.headers, 
-                'ngrok-skip-browser-warning': '1', 
-                'Content-Type': 'application/json' 
-            };
+            const url = `${API}${path}${path.includes('?') ? '&' : '?'}auth=${encodeURIComponent(authData)}`;
+            options.headers = { ...options.headers, 'ngrok-skip-browser-warning': '1', 'Content-Type': 'application/json' };
             return fetch(url, options);
         }
 
         async function loadData() {
             try {
-                const r = await apiFetch(`/api/init`);
-                if (!r.ok) {
-                    if(r.status === 403) tg.showAlert("Ошибка 403: Сервер отклонил данные.");
-                    return;
-                }
+                const r = await apiFetch("/api/init");
                 const d = await r.json();
-                
                 document.getElementById('user-name').innerText = d.user.name;
                 document.getElementById('avatar').innerText = d.user.name[0].toUpperCase();
-                
-                if (d.user.is_banned) {
-                    document.getElementById('banned-alert').style.display = 'block'; 
-                    document.getElementById('key-card').style.display = 'none';
-                    document.getElementById('status-sub').innerHTML = `<span class="status-badge expired">Забанен</span>`;
-                } else {
-                    document.getElementById('status-sub').innerHTML = d.user.is_active ? `<span class="status-badge">До ${d.user.expiry}</span>` : `<span class="status-badge expired">Истекла</span>`;
-                    document.getElementById('vless-key').value = d.user.key || "";
-                    document.getElementById('btn-gen-key').innerText = d.user.key ? "Обновить" : "Создать ключ";
-                }
-
-                document.getElementById('stat-up').innerText = d.stats.up + " MB"; 
+                document.getElementById('vless-key').value = d.user.key || "";
+                document.getElementById('stat-up').innerText = d.stats.up + " MB";
                 document.getElementById('stat-down').innerText = d.stats.down + " MB";
-                document.getElementById('ref-count').innerText = d.ref.count; 
+                document.getElementById('ref-count').innerText = d.ref.count;
                 document.getElementById('ref-link').value = d.ref.link;
+                document.getElementById('status-sub').innerHTML = d.user.is_active ? `<span class="status-badge">До ${d.user.expiry}</span>` : `<span class="status-badge expired">Истекла</span>`;
                 
                 if (d.user.is_admin) { 
                     document.getElementById('nav-admin').style.display = 'flex'; 
                     loadAdminData(); 
                 }
-            } catch(e) { 
-                console.error(e); 
-                tg.showAlert("Ошибка связи с сервером. Проверьте туннель."); 
-            }
+            } catch(e) { tg.showAlert("Ошибка связи с сервером"); }
         }
 
-        async function generateKey() {
-            if(!confirm("Сгенерировать/сбросить ключ? Старый перестанет работать.")) return;
-            const r = await apiFetch(`/api/user/generate_key`, { method: 'POST' });
+        // ПОДДЕРЖКА
+        async function loadTickets() {
+            const r = await apiFetch("/api/user/tickets");
             const d = await r.json();
-            document.getElementById('vless-key').value = d.key; 
-            document.getElementById('btn-gen-key').innerText = "Обновить";
-            tg.showAlert("Ключ готов!");
-        }
-        
-        async function checkStatus() { 
-            try {
-                const r = await apiFetch(`/api/user/status`);
-                const d = await r.json();
-                tg.showAlert(d.status); 
-            } catch(e) {
-                tg.showAlert("Ошибка при запросе статуса.");
-            }
+            const box = document.getElementById('chat-box');
+            if(!d.messages.length) { box.innerHTML = "<p style='text-align:center; color:var(--text-dim)'>Сообщений нет</p>"; return; }
+            box.innerHTML = d.messages.map(m => `<div class="msg ${m.role}">${m.text}</div>`).join('');
+            box.scrollTop = box.scrollHeight;
         }
 
-        // --- АДМИН ЛОГИКА ---
+        async function sendTicketMessage() {
+            const inp = document.getElementById('support-input');
+            if(!inp.value.trim()) return;
+            await apiFetch("/api/user/tickets/send", { method: 'POST', body: JSON.stringify({ text: inp.value }) });
+            inp.value = ""; loadTickets();
+        }
+
+        // АДМИНКА
         async function loadAdminData() {
-            const r = await apiFetch(`/api/admin/data`);
+            const r = await apiFetch("/api/admin/data");
             const d = await r.json();
             adminUsersData = d.users;
-            
-            document.getElementById('server-stats').innerHTML = `Сеть: UP ${d.network.up}MB | DL ${d.network.down}MB<br><br>${d.server.replace(/\n/g, '<br>')}`;
+            document.getElementById('server-stats').innerText = `Traffic: UP ${d.network.up} / DL ${d.network.down}\n${d.server}`;
             renderUsers();
+            loadAdminTickets();
+        }
 
-            document.getElementById('static-list').innerHTML = d.statics.map(p => `
-                <div class="card" style="padding:10px; font-size:12px;">
-                    <b>${p.name}</b> <button class="btn btn-danger" style="padding:4px; margin:0; width:auto; float:right;" onclick="apiAction('static','delete',${p.id})">Удалить</button><br>
-                    <input type="text" value="${p.url}" readonly onclick="navigator.clipboard.writeText(this.value); tg.showAlert('Скопировано')">
-                </div>
-            `).join('');
+        async function loadAdminTickets() {
+            const r = await apiFetch("/api/admin/tickets");
+            const d = await r.json();
+            document.getElementById('admin-tickets-list').innerHTML = d.tickets.map(t => `
+                <div class="card" onclick="openUserModal({id:${t.user_id}, name:'${t.user_name}'})">
+                    <b>#${t.id} ${t.user_name}</b><br><small>${t.last_message}</small>
+                </div>`).join('');
         }
 
         function renderUsers() {
-            const filter = document.getElementById('user-filter').value;
-            let html = "";
-            adminUsersData.forEach(u => {
-                if(filter === 'active' && !u.is_active) return;
-                if(filter === 'inactive' && u.is_active) return;
-                html += `
-                <div class="card" style="padding:12px; font-size:12px; cursor:pointer; ${u.banned ? 'border-color: var(--red);' : ''}" onclick='openUserModal(${JSON.stringify(u)})'>
-                    <div style="display:flex; justify-content:space-between;">
-                        <b>${u.name}</b> <span style="color:var(--text-dim)">ID: ${u.id}</span>
-                    </div>
-                    <div style="margin-top:5px;">
-                        ${u.banned ? '<span style="color:var(--red)">БАН</span>' : (u.is_active ? `<span style="color:var(--green)">До: ${u.expiry}</span>` : `<span style="color:var(--red)">Истекла: ${u.expiry}</span>`)}
-                        <br><span style="color:var(--text-dim)">@${u.username}</span>
-                    </div>
-                </div>`;
-            });
-            document.getElementById('user-list-container').innerHTML = html || "<p style='text-align:center; color:var(--text-dim)'>Пусто</p>";
+            const cont = document.getElementById('user-list-container');
+            cont.innerHTML = adminUsersData.map(u => `
+                <div class="card" onclick='openUserModal(${JSON.stringify(u)})'>
+                    <b>${u.name}</b> <small>ID: ${u.id}</small>
+                </div>`).join('');
         }
 
         function openUserModal(u) {
             document.getElementById('um-name').innerText = u.name;
             document.getElementById('um-id').value = u.id;
-            document.getElementById('um-key').value = u.key || 'Нет ключа';
-            document.getElementById('um-ban-btn').innerText = u.banned ? "Разбанить" : "Бан";
-            document.getElementById('um-m').value = 0; document.getElementById('um-d').value = 0;
-            document.getElementById('um-h').value = 0; document.getElementById('um-min').value = 0;
             document.getElementById('user-modal').classList.add('active');
         }
-        
         function closeModal() { document.getElementById('user-modal').classList.remove('active'); }
 
         async function manageTime(action) {
-            const data = { 
-                action: action, 
-                months: document.getElementById('um-m').value, 
-                days: document.getElementById('um-d').value, 
-                hours: document.getElementById('um-h').value, 
-                minutes: document.getElementById('um-min').value 
-            };
-            await apiFetch(`/api/admin/time/${document.getElementById('um-id').value}`, { 
-                method: 'POST', 
-                body: JSON.stringify(data) 
-            });
-            tg.showAlert("Время обновлено!"); 
-            closeModal(); 
-            loadAdminData();
+            const body = { action, months: document.getElementById('um-m').value, days: document.getElementById('um-d').value };
+            await apiFetch(`/api/admin/time/${document.getElementById('um-id').value}`, { method: 'POST', body: JSON.stringify(body) });
+            closeModal(); loadAdminData();
         }
 
-        async function toggleBan() {
-            const action = document.getElementById('um-ban-btn').innerText === "Бан" ? "ban" : "unban";
-            await apiAction('ban', action, document.getElementById('um-id').value); 
-            closeModal();
-        }
-
-        async function promptReceipt() {
-            let url = prompt("Введите ссылку на чек из приложения 'Мой Налог':");
-            if(url) { 
-                await apiFetch(`/api/admin/action/notify/receipt/${document.getElementById('um-id').value}`, { 
-                    method: 'POST', 
-                    body: JSON.stringify({url}) 
-                }); 
-                tg.showAlert("Чек успешно отправлен юзеру в бот!"); 
-            }
-        }
-
-        async function promptEmail() {
-            let em = prompt("Введите Email получателя:");
-            if(em) { 
-                await apiFetch(`/api/admin/action/notify/email/${document.getElementById('um-id').value}`, { 
-                    method: 'POST', 
-                    body: JSON.stringify({email: em}) 
-                }); 
-                tg.showAlert("Письмо с ключом отправлено!"); 
-            }
-        }
-
-        async function apiAction(obj, action, target) {
-            await apiFetch(`/api/admin/action/${obj}/${action}/${target}`, { method: 'POST' });
-            tg.showAlert("Команда выполнена!"); 
-            loadAdminData();
-        }
-
-        const tpls = {
-            manual: "",
-            discount: "🎉 <b>Специальное предложение!</b>\n\nТолько сейчас отличные скидки на продление подписки. Успейте воспользоваться!",
-            maintenance: "🛠 <b>Технические работы</b>\n\nНа сервере проводятся плановые работы. VPN временно недоступен. Приносим извинения! 🙏",
-            update: "⚡️ <b>Важное обновление!</b>\n\nКонфигурация серверов обновлена. Пожалуйста, зайдите в меню и нажмите «Обновить ключ»."
+        // ГАЙДЫ
+        const guides = {
+            ios: { title: "iOS", steps: ["Копируйте ключ", "Скачайте FoXray", "Нажмите + -> Import"], link: "https://apps.apple.com/app/foxray/id6444819615" },
+            android: { title: "Android", steps: ["Копируйте ключ", "Скачайте v2rayNG", "Нажмите + -> Import"], link: "https://play.google.com/store/apps/details?id=com.v2ray.ang" },
+            pc: { title: "PC", steps: ["Win: v2rayN", "Mac: V2RayU", "CTRL+V"], link: "https://github.com/2dust/v2rayN/releases" }
         };
-        
-        function applyTemplate() { 
-            document.getElementById('bc-text').value = tpls[document.getElementById('bc-template').value]; 
+
+        function showGuide(p) {
+            const g = guides[p];
+            document.getElementById('guide-title').innerText = g.title;
+            document.getElementById('guide-steps').innerHTML = g.steps.map((s,i) => `<div class="step-item"><div class="step-num">${i+1}</div>${s}</div>`).join('');
+            document.getElementById('guide-download').innerHTML = `<div class="download-area"><a href="${g.link}" target="_blank">СКАЧАТЬ КЛИЕНТ</a></div>`;
+            document.getElementById('guide-modal').classList.add('active');
+        }
+        function closeGuide() { document.getElementById('guide-modal').classList.remove('active'); }
+
+        // ОБЩЕЕ
+        function switchTab(id, el) {
+            document.querySelectorAll('.tab-content, .nav-item').forEach(e => e.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+            if(id === 'tab-support') loadTickets();
+            if(id === 'tab-admin') loadAdminData();
         }
 
-        async function sendBroadcast() {
-            const data = { 
-                target: document.getElementById('bc-target').value, 
-                text: document.getElementById('bc-text').value, 
-                btn_name: document.getElementById('bc-btn-name').value, 
-                btn_url: document.getElementById('bc-btn-url').value 
-            };
-            if(!data.text || !confirm("Вы уверены, что хотите запустить рассылку?")) return;
-            
-            await apiFetch(`/api/admin/broadcast`, { 
-                method: 'POST', 
-                body: JSON.stringify(data) 
-            });
-            tg.showAlert("Рассылка успешно завершена!"); 
-            document.getElementById('bc-text').value = '';
+        function switchAdmin(id, el) {
+            document.querySelectorAll('#adm-users, #adm-mass, #adm-server, #adm-tickets').forEach(e => e.style.display = 'none');
+            document.querySelectorAll('.admin-tab').forEach(e => e.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            el.classList.add('active');
         }
 
-        async function createStatic() {
-            const name = document.getElementById('new-static-name').value;
-            if(!name) return;
-            await apiAction('static', 'create', name); 
-            document.getElementById('new-static-name').value = '';
-        }
-
-        // UI Helpers
-        function switchTab(id, el) { 
-            document.querySelectorAll('.tab-content, .nav-item').forEach(e => e.classList.remove('active')); 
-            document.getElementById(id).classList.add('active'); 
-            el.classList.add('active'); 
-        }
-        
-        function switchAdmin(id, el) { 
-            document.querySelectorAll('#adm-users, #adm-server, #adm-mass').forEach(e => e.style.display = 'none'); 
-            document.querySelectorAll('.admin-tab').forEach(e => e.classList.remove('active')); 
-            document.getElementById(id).style.display = 'block'; 
-            el.classList.add('active'); 
-        }
-        
-        function copyKey() { navigator.clipboard.writeText(document.getElementById('vless-key').value); tg.showAlert("Ключ скопирован!"); }
+        function copyKey() { navigator.clipboard.writeText(document.getElementById('vless-key').value); tg.showAlert("Скопировано!"); }
         function copyRef() { navigator.clipboard.writeText(document.getElementById('ref-link').value); tg.showAlert("Ссылка скопирована!"); }
         function buy(m, p) { tg.sendData(JSON.stringify({action: 'buy', months: m, price: p})); tg.close(); }
 
-        const guides = {
-    ios: {
-        title: "Настройка для iOS",
-        steps: [
-            "Скопируйте ваш VLESS ключ в профиле",
-            "Установите приложение FoXray из App Store",
-            "В приложении нажмите кнопку '+'",
-            "Выберите 'Import from Clipboard'",
-            "Нажмите на появившийся прокси и переключите тумблер 'Connect'"
-        ],
-        app: "FoXray",
-        link: "https://apps.apple.com/app/foxray/id6444819615"
-    },
-    android: {
-        title: "Настройка для Android",
-        steps: [
-            "Скопируйте ваш VLESS ключ",
-            "Установите v2rayNG из Google Play",
-            "Нажмите '+' вверху экрана",
-            "Выберите 'Импорт профиля из буфера обмена'",
-            "Нажмите на добавленный профиль и на иконку 'V' внизу"
-        ],
-        app: "v2rayNG",
-        link: "https://play.google.com/store/apps/details?id=com.v2ray.ang"
-    },
-    pc: {
-        title: "Настройка для ПК",
-        steps: [
-            "Windows: Скачайте v2rayN, нажмите CTRL+V",
-            "macOS: Скачайте V2RayU, выберите 'Import from clipboard'",
-            "Включите системный прокси в настройках клиента"
-        ],
-        app: "v2rayN / V2RayU",
-        link: "https://github.com/2dust/v2rayN/releases"
-    }
-};
-
-function showGuide(platform) {
-    const g = guides[platform];
-    document.getElementById('guide-title').innerText = g.title;
-    
-    let stepsHtml = g.steps.map((s, i) => `
-        <div class="step-item">
-            <div class="step-num">${i + 1}</div>
-            <div>${s}</div>
-        </div>
-    `).join('');
-    
-    document.getElementById('guide-steps').innerHTML = stepsHtml;
-    document.getElementById('guide-download').innerHTML = `
-        <div class="download-area">
-            <div class="app-info">
-                <b>${g.app}</b>
-            </div>
-            <a href="${g.link}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:bold;">СКАЧАТЬ</a>
-        </div>
-    `;
-    
-    document.getElementById('guide-modal').classList.add('active');
-}
-
-function closeGuide() {
-    document.getElementById('guide-modal').classList.remove('active');
-}
-
-        async function loadTickets() {
-    const d = await apiFetch("/api/user/tickets");
-    const container = document.getElementById('chat-box');
-    if (!d.messages || d.messages.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:var(--text-dim);">У вас пока нет обращений. Напишите первый вопрос!</p>';
-        return;
-    }
-    container.innerHTML = d.messages.map(m => `
-        <div class="msg ${m.role === 'admin' ? 'admin' : 'user'}">
-            ${m.text}
-            <div style="font-size:9px; opacity:0.5; margin-top:4px;">${m.date}</div>
-        </div>
-    `).join('');
-    container.scrollTop = container.scrollHeight;
-}
-
-async function sendTicketMessage() {
-    const input = document.getElementById('support-input');
-    if (!input.value.trim()) return;
-    
-    await apiFetch("/api/user/tickets/send", {
-        method: 'POST',
-        body: JSON.stringify({ text: input.value })
-    });
-    input.value = "";
-    loadTickets();
-}
-
-        async function loadAdminTickets() {
-    const d = await apiFetch("/api/admin/tickets");
-    document.getElementById('admin-tickets-list').innerHTML = d.tickets.map(t => `
-        <div class="card">
-            <b>Тикет #${t.id} - ${t.user_name}</b>
-            <p>${t.last_message}</p>
-            <button class="btn" onclick="openUserModal({id: ${t.user_id}, name: '${t.user_name}'})">Ответить</button>
-        </div>
-    `).join('');
-}
-// Вызывай loadTickets() при переключении на вкладку
-
-        // Запуск
-        tg.ready(); 
-        tg.expand(); 
-        setTimeout(() => loadData(), 100); // Страховка для медленного мобильного инета
+        tg.ready(); tg.expand(); loadData();
     </script>
 </body>
 </html>
