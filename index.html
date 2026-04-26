@@ -200,12 +200,16 @@
         }
 
         // 🛡 УЛЬТИМАТИВНАЯ ФУНКЦИЯ ЗАПРОСОВ: Токен летит в URL (никаких 403 на телефонах)
+        // 🛡 УЛЬТИМАТИВНАЯ ФУНКЦИЯ ЗАПРОСОВ С ЖУЧКОМ
         function apiFetch(path, options = {}) {
             const authData = getInitData();
+            
             if (!authData) {
-                tg.showAlert("⚠️ Ошибка: телефон не передал данные. Перезапустите бота.");
+                // ВЫВОДИМ ПОЛНУЮ ССЫЛКУ НА ЭКРАН ТЕЛЕФОНА!
+                tg.showAlert("🔴 ДЕБАГ ССЫЛКИ:\n\n" + window.location.href);
                 throw new Error("No initData");
             }
+            
             const url = `${API}${path}?auth=${encodeURIComponent(authData)}`;
             options.headers = { 
                 ...options.headers, 
