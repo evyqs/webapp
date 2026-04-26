@@ -12,7 +12,7 @@
         .btn { background: var(--accent); color: white; border: none; border-radius: 10px; padding: 12px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 8px; }
         .btn-secondary { background: #27272a; color: var(--text); }
         .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--red); }
-        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(11,11,12,0.9); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid #27272a; }
+        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(11,11,12,0.9); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 12px; border-top: 1px solid #27272a; z-index: 100;}
         .nav-item { color: var(--text-dim); text-decoration: none; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .nav-item.active { color: var(--accent); }
         .tab-content { display: none; }
@@ -22,7 +22,11 @@
         .admin-tab.active { background: var(--accent); }
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: #064e3b; color: var(--green); }
         .status-badge.expired { background: #450a0a; color: var(--red); }
-        input, textarea { width: 100%; background: #0f172a; border: 1px solid #1e293b; padding: 10px; border-radius: 8px; color: var(--text); box-sizing: border-box; font-family: inherit; }
+        input, textarea, select { width: 100%; background: #0f172a; border: 1px solid #1e293b; padding: 10px; border-radius: 8px; color: var(--text); box-sizing: border-box; font-family: inherit; margin-bottom: 10px;}
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; padding: 20px; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--card); padding: 20px; border-radius: 16px; width: 100%; max-width: 400px; border: 1px solid #27272a; max-height: 80vh; overflow-y: auto;}
     </style>
 </head>
 <body>
@@ -47,6 +51,7 @@
                 <button class="btn" onclick="copyKey()">Копировать</button>
                 <button class="btn btn-secondary" onclick="generateKey()" id="btn-gen-key">Сбросить</button>
             </div>
+            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="checkStatus()">🔍 Проверить статус подключения</button>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -57,7 +62,7 @@
         <div class="card">
             <h3 style="margin: 0 0 10px 0;">🎁 Партнерская программа</h3>
             <p style="font-size: 13px; color: var(--text-dim); margin-top:0;">Приглашено: <b id="ref-count">0</b> чел.</p>
-            <input type="text" id="ref-link" readonly style="margin-bottom: 10px;">
+            <input type="text" id="ref-link" readonly>
             <button class="btn btn-secondary" onclick="copyRef()">Поделиться ссылкой</button>
         </div>
     </div>
@@ -80,15 +85,42 @@
     </div>
 
     <div id="tab-admin" class="tab-content">
-        <h2>Админ-панель</h2>
+        <h2>Управление</h2>
         <div class="admin-nav">
             <div class="admin-tab active" onclick="switchAdmin('adm-users', this)">Пользователи</div>
-            <div class="admin-tab" onclick="switchAdmin('adm-server', this)">Сервер & Статика</div>
             <div class="admin-tab" onclick="switchAdmin('adm-mass', this)">Рассылка</div>
+            <div class="admin-tab" onclick="switchAdmin('adm-server', this)">Сервер & Статика</div>
         </div>
 
-        <div id="adm-users"></div>
+        <div id="adm-users">
+            <select id="user-filter" onchange="renderUsers()">
+                <option value="all">Все пользователи</option>
+                <option value="active">С подпиской</option>
+                <option value="inactive">Без подписки</option>
+            </select>
+            <div id="user-list-container"></div>
+        </div>
         
+        <div id="adm-mass" style="display:none;">
+            <div class="card">
+                <select id="bc-target">
+                    <option value="all">Всем пользователям</option>
+                    <option value="active">Только с подпиской</option>
+                    <option value="inactive">Только без подписки</option>
+                </select>
+                <select id="bc-template" onchange="applyTemplate()">
+                    <option value="manual">Написать вручную</option>
+                    <option value="discount">Акция / Скидка</option>
+                    <option value="maintenance">Тех. работы</option>
+                    <option value="update">Обновление ключей</option>
+                </select>
+                <textarea id="bc-text" rows="6" placeholder="Текст рассылки..."></textarea>
+                <input type="text" id="bc-btn-name" placeholder="Текст на кнопке (необязательно)">
+                <input type="text" id="bc-btn-url" placeholder="URL ссылки (начинается с http...)">
+                <button class="btn" onclick="sendBroadcast()">Отправить рассылку</button>
+            </div>
+        </div>
+
         <div id="adm-server" style="display:none;">
             <div class="card" style="font-family: monospace; font-size: 11px; color: var(--green);" id="server-stats"></div>
             <div style="display: flex; gap: 10px;">
@@ -102,12 +134,36 @@
             </div>
             <div id="static-list"></div>
         </div>
+    </div>
 
-        <div id="adm-mass" style="display:none;">
-            <div class="card">
-                <h3>📢 Рассылка всем</h3>
-                <textarea id="broadcast-text" rows="5" placeholder="Текст сообщения (поддерживает HTML)..."></textarea>
-                <button class="btn" onclick="sendBroadcast()">Отправить всем</button>
+    <div class="modal" id="user-modal">
+        <div class="modal-content">
+            <h3 id="um-name" style="margin-top: 0;">User Name</h3>
+            <input type="hidden" id="um-id">
+            
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 5px;">Управление временем (+ / -):</p>
+            <div class="grid-4">
+                <input type="number" id="um-m" placeholder="Мес" value="0">
+                <input type="number" id="um-d" placeholder="Дни" value="0">
+                <input type="number" id="um-h" placeholder="Час" value="0">
+                <input type="number" id="um-min" placeholder="Мин" value="0">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="background: var(--green);" onclick="manageTime('add')">Добавить</button>
+                <button class="btn btn-danger" onclick="manageTime('remove')">Отнять</button>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #27272a; margin: 15px 0;">
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 5px;">Отправка данных:</p>
+            <button class="btn btn-secondary" onclick="promptReceipt()">🧾 Отправить чек</button>
+            <button class="btn btn-secondary" onclick="promptEmail()">📧 Отправить ключ на Email</button>
+            
+            <hr style="border: 0; border-top: 1px solid #27272a; margin: 15px 0;">
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 5px;">Ключ пользователя:</p>
+            <input type="text" id="um-key" readonly>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-danger" id="um-ban-btn" onclick="toggleBan()">Бан</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Закрыть</button>
             </div>
         </div>
     </div>
@@ -122,27 +178,30 @@
     <script>
         const tg = window.Telegram.WebApp;
         const API = "https://heroism-parasite-denim.ngrok-free.dev"; 
+        let adminUsersData = [];
 
         async function loadData() {
-            const r = await fetch(`${API}/api/init`, { headers: {'Authorization': tg.initData, 'ngrok-skip-browser-warning': '1'} });
-            const d = await r.json();
-            
-            document.getElementById('user-name').innerText = d.user.name;
-            document.getElementById('avatar').innerText = d.user.name[0];
-            
-            if (d.user.is_banned) {
-                document.getElementById('banned-alert').style.display = 'block'; document.getElementById('key-card').style.display = 'none';
-                document.getElementById('status-sub').innerHTML = `<span class="status-badge expired">Забанен</span>`;
-            } else {
-                document.getElementById('status-sub').innerHTML = d.user.is_active ? `<span class="status-badge">До ${d.user.expiry}</span>` : `<span class="status-badge expired">Истекла</span>`;
-                document.getElementById('vless-key').value = d.user.key || "";
-                document.getElementById('btn-gen-key').innerText = d.user.key ? "Обновить" : "Создать ключ";
-            }
+            try {
+                const r = await fetch(`${API}/api/init`, { headers: {'Authorization': tg.initData, 'ngrok-skip-browser-warning': '1'} });
+                const d = await r.json();
+                
+                document.getElementById('user-name').innerText = d.user.name;
+                document.getElementById('avatar').innerText = d.user.name[0];
+                
+                if (d.user.is_banned) {
+                    document.getElementById('banned-alert').style.display = 'block'; document.getElementById('key-card').style.display = 'none';
+                    document.getElementById('status-sub').innerHTML = `<span class="status-badge expired">Забанен</span>`;
+                } else {
+                    document.getElementById('status-sub').innerHTML = d.user.is_active ? `<span class="status-badge">До ${d.user.expiry}</span>` : `<span class="status-badge expired">Истекла</span>`;
+                    document.getElementById('vless-key').value = d.user.key || "";
+                    document.getElementById('btn-gen-key').innerText = d.user.key ? "Обновить" : "Создать ключ";
+                }
 
-            document.getElementById('stat-up').innerText = d.stats.up + " MB"; document.getElementById('stat-down').innerText = d.stats.down + " MB";
-            document.getElementById('ref-count').innerText = d.ref.count; document.getElementById('ref-link').value = d.ref.link;
-            
-            if (d.user.is_admin) { document.getElementById('nav-admin').style.display = 'flex'; loadAdminData(); }
+                document.getElementById('stat-up').innerText = d.stats.up + " MB"; document.getElementById('stat-down').innerText = d.stats.down + " MB";
+                document.getElementById('ref-count').innerText = d.ref.count; document.getElementById('ref-link').value = d.ref.link;
+                
+                if (d.user.is_admin) { document.getElementById('nav-admin').style.display = 'flex'; loadAdminData(); }
+            } catch(e) { tg.showAlert("Ошибка связи с сервером"); }
         }
 
         async function generateKey() {
@@ -152,30 +211,75 @@
             document.getElementById('vless-key').value = d.key; document.getElementById('btn-gen-key').innerText = "Обновить";
             tg.showAlert("Ключ готов!");
         }
+        
+        function checkStatus() { tg.showAlert("Статус проверяется (функция симуляции). Отдача: " + document.getElementById('stat-up').innerText); }
 
+        // --- АДМИН ЛОГИКА ---
         async function loadAdminData() {
             const r = await fetch(`${API}/api/admin/data`, { headers: {'Authorization': tg.initData, 'ngrok-skip-browser-warning': '1'} });
             const d = await r.json();
-            
+            adminUsersData = d.users;
             document.getElementById('server-stats').innerHTML = `Сеть: UP ${d.network.up}MB | DL ${d.network.down}MB<br><br>${d.server.replace(/\n/g, '<br>')}`;
-            
-            document.getElementById('adm-users').innerHTML = d.users.map(u => `
-                <div class="card" style="padding:12px; font-size:12px; ${u.banned ? 'border-color: var(--red);' : ''}">
-                    <b>${u.name}</b> (ID: ${u.id}) - ${u.banned ? '<span style="color:var(--red)">БАН</span>' : `До: ${u.expiry}`}<br>
-                    <div style="display:flex; gap:5px; margin-top:8px;">
-                        <button class="btn btn-secondary" style="padding:6px; margin:0;" onclick="apiAction('time','add',${u.id})">+Месяц</button>
-                        <button class="btn btn-secondary" style="padding:6px; margin:0;" onclick="apiAction('time','remove',${u.id})">-Месяц</button>
-                        <button class="btn ${u.banned ? 'btn-secondary' : 'btn-danger'}" style="padding:6px; margin:0;" onclick="apiAction('ban','${u.banned ? 'unban' : 'ban'}',${u.id})">${u.banned ? 'Разбанить' : 'Бан'}</button>
-                    </div>
-                </div>
-            `).join('');
+            renderUsers();
 
             document.getElementById('static-list').innerHTML = d.statics.map(p => `
                 <div class="card" style="padding:10px; font-size:12px;">
                     <b>${p.name}</b> <button class="btn btn-danger" style="padding:4px; margin:0; width:auto; float:right;" onclick="apiAction('static','delete',${p.id})">Удалить</button><br>
-                    <input type="text" value="${p.url}" readonly style="margin-top:5px;" onclick="navigator.clipboard.writeText(this.value); tg.showAlert('Скопировано')">
+                    <input type="text" value="${p.url}" readonly onclick="navigator.clipboard.writeText(this.value); tg.showAlert('Скопировано')">
                 </div>
             `).join('');
+        }
+
+        function renderUsers() {
+            const filter = document.getElementById('user-filter').value;
+            let html = "";
+            adminUsersData.forEach(u => {
+                if(filter === 'active' && !u.is_active) return;
+                if(filter === 'inactive' && u.is_active) return;
+                html += `
+                <div class="card" style="padding:12px; font-size:12px; cursor:pointer; ${u.banned ? 'border-color: var(--red);' : ''}" onclick='openUserModal(${JSON.stringify(u)})'>
+                    <div style="display:flex; justify-content:space-between;">
+                        <b>${u.name}</b> <span style="color:var(--text-dim)">ID: ${u.id}</span>
+                    </div>
+                    <div style="margin-top:5px;">
+                        ${u.banned ? '<span style="color:var(--red)">БАН</span>' : (u.is_active ? `<span style="color:var(--green)">До: ${u.expiry}</span>` : `<span style="color:var(--red)">Истекла: ${u.expiry}</span>`)}
+                        <br><span style="color:var(--text-dim)">@${u.username}</span>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('user-list-container').innerHTML = html || "<p style='text-align:center; color:var(--text-dim)'>Пусто</p>";
+        }
+
+        function openUserModal(u) {
+            document.getElementById('um-name').innerText = u.name;
+            document.getElementById('um-id').value = u.id;
+            document.getElementById('um-key').value = u.key || 'Нет ключа';
+            document.getElementById('um-ban-btn').innerText = u.banned ? "Разбанить" : "Бан";
+            document.getElementById('um-m').value = 0; document.getElementById('um-d').value = 0;
+            document.getElementById('um-h').value = 0; document.getElementById('um-min').value = 0;
+            document.getElementById('user-modal').classList.add('active');
+        }
+        function closeModal() { document.getElementById('user-modal').classList.remove('active'); }
+
+        async function manageTime(action) {
+            const data = { action: action, months: document.getElementById('um-m').value, days: document.getElementById('um-d').value, hours: document.getElementById('um-h').value, minutes: document.getElementById('um-min').value };
+            await fetch(`${API}/api/admin/time/${document.getElementById('um-id').value}`, { method: 'POST', headers: {'Authorization': tg.initData, 'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            tg.showAlert("Время обновлено!"); closeModal(); loadAdminData();
+        }
+
+        async function toggleBan() {
+            const action = document.getElementById('um-ban-btn').innerText === "Бан" ? "ban" : "unban";
+            await apiAction('ban', action, document.getElementById('um-id').value); closeModal();
+        }
+
+        async function promptReceipt() {
+            let url = prompt("Введите ссылку на чек:");
+            if(url) { await fetch(`${API}/api/admin/action/notify/receipt/${document.getElementById('um-id').value}`, { method: 'POST', headers: {'Authorization': tg.initData, 'Content-Type':'application/json'}, body: JSON.stringify({url}) }); tg.showAlert("Чек отправлен!"); }
+        }
+
+        async function promptEmail() {
+            let em = prompt("Введите Email получателя:");
+            if(em) { await fetch(`${API}/api/admin/action/notify/email/${document.getElementById('um-id').value}`, { method: 'POST', headers: {'Authorization': tg.initData, 'Content-Type':'application/json'}, body: JSON.stringify({email: em}) }); tg.showAlert("Письмо отправлено!"); }
         }
 
         async function apiAction(obj, action, target) {
@@ -183,18 +287,25 @@
             tg.showAlert("Выполнено!"); loadAdminData();
         }
 
+        const tpls = {
+            manual: "",
+            discount: "🎉 <b>Специальное предложение!</b>\n\nТолько сейчас отличные скидки на продление подписки. Успейте воспользоваться!",
+            maintenance: "🛠 <b>Технические работы</b>\n\nНа сервере плановые работы. VPN временно недоступен. Приносим извинения! 🙏",
+            update: "⚡️ <b>Важное обновление!</b>\n\nКонфигурация серверов обновлена. Пожалуйста, зайдите в меню и нажмите «Обновить ключ»."
+        };
+        function applyTemplate() { document.getElementById('bc-text').value = tpls[document.getElementById('bc-template').value]; }
+
+        async function sendBroadcast() {
+            const data = { target: document.getElementById('bc-target').value, text: document.getElementById('bc-text').value, btn_name: document.getElementById('bc-btn-name').value, btn_url: document.getElementById('bc-btn-url').value };
+            if(!data.text || !confirm("Запустить рассылку?")) return;
+            await fetch(`${API}/api/admin/broadcast`, { method: 'POST', headers: {'Authorization': tg.initData, 'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            tg.showAlert("Рассылка завершена!");
+        }
+
         async function createStatic() {
             const name = document.getElementById('new-static-name').value;
             if(!name) return;
-            await apiAction('static', 'create', name);
-            document.getElementById('new-static-name').value = '';
-        }
-
-        async function sendBroadcast() {
-            const text = document.getElementById('broadcast-text').value;
-            if(!text || !confirm("Отправить сообщение ВСЕМ?")) return;
-            await fetch(`${API}/api/admin/broadcast`, { method: 'POST', headers: {'Authorization': tg.initData, 'Content-Type': 'application/json'}, body: JSON.stringify({text}) });
-            tg.showAlert("Рассылка запущена!"); document.getElementById('broadcast-text').value = '';
+            await apiAction('static', 'create', name); document.getElementById('new-static-name').value = '';
         }
 
         function switchTab(id, el) { document.querySelectorAll('.tab-content, .nav-item').forEach(e => e.classList.remove('active')); document.getElementById(id).classList.add('active'); el.classList.add('active'); }
@@ -203,8 +314,7 @@
         function copyRef() { navigator.clipboard.writeText(document.getElementById('ref-link').value); tg.showAlert("Ссылка скопирована!"); }
         function buy(m, p) { tg.sendData(JSON.stringify({action: 'buy', months: m, price: p})); tg.close(); }
 
-        tg.ready();
-        tg.expand(); loadData();
+        tg.ready(); tg.expand(); loadData();
     </script>
 </body>
 </html>
