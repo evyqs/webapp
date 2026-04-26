@@ -52,7 +52,7 @@
                 <button class="btn" onclick="copyKey()">Копировать</button>
                 <button class="btn btn-secondary" onclick="generateKey()" id="btn-gen-key">Сбросить</button>
             </div>
-            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="checkStatus()">🔍 Проверить статус подключения</button>
+            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="checkStatus()">🔍 Статус подключения (Сервер)</button>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -82,7 +82,7 @@
             <button class="btn btn-secondary" onclick="tg.showAlert('Скачать v2rayN -> CTRL+V')">💻 Windows</button>
             <button class="btn btn-secondary" onclick="tg.showAlert('Скачать V2RayU -> Import config from clipboard')">🍎 Mac</button>
         </div>
-        <button class="btn" style="margin-top: 20px;" onclick="tg.close()">🆘 Вернуться в бота (Поддержка)</button>
+        <button class="btn" style="margin-top: 20px;" onclick="tg.sendData('support'); tg.close();">🆘 Написать в поддержку</button>
     </div>
 
     <div id="tab-admin" class="tab-content">
@@ -179,9 +179,10 @@
     <script>
         const tg = window.Telegram.WebApp;
         const API = "https://heroism-parasite-denim.ngrok-free.dev"; 
+        
         let adminUsersData = [];
 
-        // 🛡 УМНАЯ ФУНКЦИЯ: Если библиотека тупит, достаем данные вручную из URL
+        // 🛡 Вытаскиваем токен авторизации надежным способом
         function getInitData() {
             let data = tg.initData;
             if (!data) {
@@ -191,10 +192,11 @@
             return data;
         }
 
+        // 🛡 УЛЬТИМАТИВНАЯ ФУНКЦИЯ ЗАПРОСОВ: Токен летит в URL (никаких 403 на телефонах)
         function apiFetch(path, options = {}) {
             const authData = getInitData();
             if (!authData) {
-                tg.showAlert("⚠️ Ошибка: нет данных профиля. Убедитесь, что открываете приложение через КНОПКУ МЕНЮ, а не по ссылке.");
+                tg.showAlert("⚠️ Ошибка: телефон не передал данные. Перезапустите бота.");
                 throw new Error("No initData");
             }
             const url = `${API}${path}?auth=${encodeURIComponent(authData)}`;
@@ -252,8 +254,14 @@
             tg.showAlert("Ключ готов!");
         }
         
-        function checkStatus() { 
-            tg.showAlert("Отдано трафика за сессию: " + document.getElementById('stat-up').innerText); 
+        async function checkStatus() { 
+            try {
+                const r = await apiFetch(`/api/user/status`);
+                const d = await r.json();
+                tg.showAlert(d.status); 
+            } catch(e) {
+                tg.showAlert("Ошибка при запросе статуса.");
+            }
         }
 
         // --- АДМИН ЛОГИКА ---
@@ -391,6 +399,7 @@
             document.getElementById('new-static-name').value = '';
         }
 
+        // UI Helpers
         function switchTab(id, el) { 
             document.querySelectorAll('.tab-content, .nav-item').forEach(e => e.classList.remove('active')); 
             document.getElementById(id).classList.add('active'); 
@@ -408,12 +417,10 @@
         function copyRef() { navigator.clipboard.writeText(document.getElementById('ref-link').value); tg.showAlert("Ссылка скопирована!"); }
         function buy(m, p) { tg.sendData(JSON.stringify({action: 'buy', months: m, price: p})); tg.close(); }
 
-        // Добавляем задержку, чтобы мобильный Telegram точно успел подгрузить данные
-        setTimeout(() => {
-            tg.ready(); 
-            tg.expand(); 
-            loadData();
-        }, 150);
+        // Запуск
+        tg.ready(); 
+        tg.expand(); 
+        setTimeout(() => loadData(), 100); // Страховка для медленного мобильного инета
     </script>
 </body>
 </html>
