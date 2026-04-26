@@ -309,6 +309,10 @@
         </div>
 
         <div id="adm-tickets" style="display:none;">
+            <select id="ticket-filter" onchange="loadAdminTickets()" style="margin-bottom: 15px;">
+    <option value="open">📥 Открытые (в работе)</option>
+    <option value="closed">📁 Архив (закрытые)</option>
+</select>
             <div id="admin-tickets-list"></div>
         </div>
         
@@ -565,38 +569,41 @@
             document.getElementById('user-list-container').innerHTML = html || "<p style='text-align:center; color:var(--text-dim)'>Никого не найдено</p>";
         }
 
-        async function loadAdminTickets() {
+       async function loadAdminTickets() {
+    const filter = document.getElementById('ticket-filter').value; // Берем значение из фильтра
     const container = document.getElementById('admin-tickets-list');
-    container.innerHTML = '<p style="text-align:center; color:var(--text-dim);">Загрузка тикетов...</p>';
+    container.innerHTML = '<p style="text-align:center; color:var(--text-dim);">Загрузка...</p>';
     
     try {
         const r = await apiFetch("/api/admin/tickets");
         const d = await r.json();
         
-        if (!d.tickets || d.tickets.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin-top:20px;">Пока нет активных обращений</p>';
+        // Фильтруем данные прямо в браузере
+        const filtered = d.tickets.filter(t => t.status === filter);
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<p style="text-align:center; padding:20px; color:var(--text-dim);">В этой категории пусто</p>';
             return;
         }
-        
-        container.innerHTML = d.tickets.map(t => `
+
+        container.innerHTML = filtered.map(t => `
             <div class="card" 
-                 onclick="openTicketModal(${t.id}, '${t.user_name}', ${t.user_id})" 
-                 style="cursor:pointer; border-left: 4px solid ${t.status === 'open' ? 'var(--accent)' : 'var(--text-dim)'}; transition: transform 0.1s;">
-                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:16px;">${t.status === 'open' ? '✉️' : '📁'}</span>
-                        <b>${t.user_name}</b>
-                    </div>
-                    <span style="font-size:10px; color:var(--text-dim)">#${t.id} | ${t.date}</span>
+                 onclick="openTicketModal(${t.id}, '${t.user_name}', ${t.user_id}, '${t.status}')" 
+                 style="cursor:pointer; border-left: 4px solid ${t.status === 'open' ? 'var(--accent)' : 'var(--text-dim)'};">
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <b>${t.user_name}</b>
+                    <span class="status-badge ${t.status === 'closed' ? 'expired' : ''}" style="font-size:9px;">
+                        ${t.status === 'open' ? 'АКТИВЕН' : 'ЗАКРЫТ'}
+                    </span>
                 </div>
-                <p style="font-size:13px; margin: 5px 0; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                <p style="font-size:13px; margin: 8px 0; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${t.last_message}
                 </p>
-                <div style="font-size:11px; color:var(--accent); margin-top:5px;">Нажмите, чтобы ответить →</div>
+                <div style="font-size:10px; color:var(--text-dim); text-align:right;">${t.date}</div>
             </div>
         `).join('');
     } catch(e) {
-        container.innerHTML = '<p style="text-align:center; color:var(--red);">Ошибка загрузки тикетов</p>';
+        container.innerHTML = 'Ошибка загрузки';
     }
 }
 
@@ -698,30 +705,34 @@
         }
 
         // Открытие модалки тикета и загрузка сообщений
-async function openTicketModal(ticketId, userName, userId) {
-    document.getElementById('tm-title').innerText = `Чат с ${userName}`;
+async function openTicketModal(ticketId, userName, userId, status) {
+    document.getElementById('tm-title').innerText = userName;
     document.getElementById('tm-id').value = ticketId;
     document.getElementById('tm-uid').value = userId;
-    document.getElementById('tm-chat-box').innerHTML = '<p style="text-align:center; color:var(--text-dim);">Загрузка...</p>';
-    document.getElementById('tm-reply-text').value = "";
-    
-    document.getElementById('ticket-reply-modal').classList.add('active');
 
-    try {
-        const r = await apiFetch(`/api/admin/tickets/${ticketId}/messages`);
-        const d = await r.json();
-        const container = document.getElementById('tm-chat-box');
-        
-        container.innerHTML = d.messages.map(m => `
-            <div class="msg ${m.role === 'admin' ? 'user' : 'admin'}"> 
-                ${m.text}
-                <div style="font-size:9px; opacity:0.5; margin-top:4px;">${m.date}</div>
-            </div>
-        `).join('');
-        container.scrollTop = container.scrollHeight;
-    } catch(e) {
-        tg.showAlert("Ошибка загрузки сообщений");
+    // Проверяем статус: если закрыт — прячем поле ввода и кнопку "Закрыть"
+    const isClosed = (status === 'closed');
+    const replyArea = document.getElementById('tm-reply-text');
+    const sendBtn = replyArea.nextElementSibling; // Твоя кнопка "Отправить"
+
+    if (isClosed) {
+        replyArea.style.display = 'none';
+        document.querySelector('.grid-2').style.display = 'none'; // Скрываем кнопки действий
+        document.getElementById('tm-chat-box').insertAdjacentHTML('afterend', '<p id="closed-msg" style="text-align:center; color:var(--red); font-size:12px;">🔒 Тикет в архиве</p>');
+    } else {
+        replyArea.style.display = 'block';
+        document.querySelector('.grid-2').style.display = 'grid';
+        const oldMsg = document.getElementById('closed-msg');
+        if(oldMsg) oldMsg.remove();
     }
+
+    // Твой старый код загрузки сообщений ниже...
+    document.getElementById('ticket-reply-modal').classList.add('active');
+    const r = await apiFetch(`/api/admin/tickets/${ticketId}/messages`);
+    const d = await r.json();
+    document.getElementById('tm-chat-box').innerHTML = d.messages.map(m => `
+        <div class="msg ${m.role === 'admin' ? 'user' : 'admin'}">${m.text}</div>
+    `).join('');
 }
 
 function closeTicketModal() {
