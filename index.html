@@ -159,6 +159,23 @@
 
         tg.expand();
         loadData();
+
+        // Функция покупки
+        function buyTariff(months, price) {
+            // Спрашиваем подтверждение
+            tg.showConfirm(`Вы хотите купить подписку на ${months} мес. за ${price} ₽?`, function(confirmed) {
+                if (confirmed) {
+                    // Отправляем данные из Web App обратно в текстового бота
+                    let payload = JSON.stringify({
+                        action: 'buy',
+                        months: months,
+                        price: price
+                    });
+                    
+                    tg.sendData(payload); // Эта команда закроет Web App и отправит JSON в бота
+                }
+            });
+        }
     </script>
 </body>
 </html>
