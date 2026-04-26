@@ -115,30 +115,26 @@
             return urlParams.get('tgWebAppData');
         }
 
-        async function loadData() {
+        async function loadData(retryCount = 0) {
+            const authData = getInitData();
+            
+            if (!authData && retryCount < 5) {
+                // Если данных нет, ждем 200мс и пробуем снова (даем время Телеграму проснуться)
+                setTimeout(() => loadData(retryCount + 1), 200);
+                return;
+            }
+
             try {
-                const authData = getInitData();
-                if (!authData) {
-                    document.body.innerHTML = `<div style="padding:20px; color:red; background:#18181b; height:100vh;">
-                        <h2>ОШИБКА АВТОРИЗАЦИИ</h2>
-                        <p>Телеграм не передал данные профиля.</p>
-                        <p style="font-size:10px; word-break:break-all; color:#94a3b8;">URL: ${window.location.href}</p>
-                    </div>`;
-                    return;
-                }
-
-                const r = await fetch(`${API}/api/init?auth=${encodeURIComponent(authData)}`, {
-                    headers: { 'ngrok-skip-browser-warning': '1', 'Content-Type': 'application/json' }
-                });
-
+                const r = await apiFetch(`/api/init`);
                 if (!r.ok) {
-                    document.body.innerHTML = `<div style="padding:20px; color:red; background:#18181b; height:100vh;">
-                        <h2>ОШИБКА СЕРВЕРА: ${r.status}</h2>
-                        <p>Сервер отклонил авторизацию.</p>
+                    const errorText = await r.text();
+                    document.body.innerHTML = `<div style="padding:20px; color:red;">
+                        <h2>ОШИБКА СЕРВЕРА</h2>
+                        <p>Статус: ${r.status}</p>
+                        <pre style="font-size:10px;">${errorText}</pre>
                     </div>`;
                     return;
                 }
-
                 const d = await r.json();
                 document.getElementById('user-name').innerText = d.user.name;
                 document.getElementById('avatar').innerText = d.user.name[0].toUpperCase();
@@ -153,16 +149,15 @@
                     document.getElementById('btn-gen-key').innerText = d.user.key ? "Обновить" : "Создать ключ";
                 }
 
-                document.getElementById('stat-up').innerText = d.stats.up + " MB"; document.getElementById('stat-down').innerText = d.stats.down + " MB";
-                document.getElementById('ref-count').innerText = d.ref.count; document.getElementById('ref-link').value = d.ref.link;
+               document.getElementById('user-name').innerText = d.user.name;
+                document.getElementById('avatar').innerText = d.user.name[0].toUpperCase();
                 
-                if (d.user.is_admin) { document.getElementById('nav-admin').style.display = 'flex'; loadAdminData(); }
-            } catch(e) { 
-                document.body.innerHTML = `<div style="padding:20px; color:red; background:#18181b; height:100vh;">
-                    <h2>КРИТИЧЕСКАЯ ОШИБКА JS</h2>
-                    <p>${e.message}</p>
-                    <p style="font-size:12px; color:#94a3b8;">Обычно означает, что ngrok не отвечает или блокирует CORS.</p>
-                </div>`;
+                if (d.user.is_admin) { 
+                    document.getElementById('nav-admin').style.display = 'flex'; 
+                    loadAdminData(); 
+                }
+            } catch(e) {
+                tg.showAlert("Критическая ошибка: " + e.message);
             }
         }
 
