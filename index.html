@@ -579,23 +579,15 @@
         }
         
         container.innerHTML = d.tickets.map(t => `
-            <div class="card" style="border-left: 4px solid ${t.status === 'open' ? 'var(--accent)' : 'var(--text-dim) Đình'};">
-                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
-                    <b>${t.user_name}</b>
-                    <span style="font-size:10px; color:var(--text-dim)">#${t.id} | ${t.date}</span>
-                </div>
-                <p style="font-size:13px; margin: 5px 0; color: #e2e8f0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                    ${t.last_message}
-                </p>
-                <div style="display:flex; gap:8px; margin-top:10px;">
-                    <button class="btn" style="margin:0; padding:6px; font-size:12px;" 
-                        onclick="openUserModal({id: ${t.user_id}, name: '${t.user_name}'})">
-                        💬 Ответить
-                    </button>
-                </div>
+        <div class="card" onclick="openTicketModal(${t.id}, '${t.user_name}', ${t.user_id})" style="cursor:pointer; border-left: 4px solid ${t.status === 'open' ? 'var(--accent)' : 'var(--text-dim)'};">
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
+                <b>${t.user_name}</b>
+                <span style="font-size:10px; color:var(--text-dim)">#${t.id} | ${t.date}</span>
             </div>
-        `).join('');
-    } catch(e) {
+            <p style="font-size:13px; margin: 5px 0; color: #e2e8f0;">${t.last_message}</p>
+        </div>
+    `).join('');
+} catch(e) {
         container.innerHTML = '<p style="text-align:center; color:var(--red);">Ошибка загрузки тикетов</p>';
     }
 }
@@ -697,10 +689,96 @@
             }
         }
 
+        // Открытие модалки тикета и загрузка сообщений
+async function openTicketModal(ticketId, userName, userId) {
+    document.getElementById('tm-title').innerText = `Чат с ${userName}`;
+    document.getElementById('tm-id').value = ticketId;
+    document.getElementById('tm-uid').value = userId;
+    document.getElementById('tm-chat-box').innerHTML = '<p style="text-align:center; color:var(--text-dim);">Загрузка...</p>';
+    document.getElementById('tm-reply-text').value = "";
+    
+    document.getElementById('ticket-reply-modal').classList.add('active');
+
+    try {
+        const r = await apiFetch(`/api/admin/tickets/${ticketId}/messages`);
+        const d = await r.json();
+        const container = document.getElementById('tm-chat-box');
+        
+        container.innerHTML = d.messages.map(m => `
+            <div class="msg ${m.role === 'admin' ? 'user' : 'admin'}"> 
+                ${m.text}
+                <div style="font-size:9px; opacity:0.5; margin-top:4px;">${m.date}</div>
+            </div>
+        `).join('');
+        container.scrollTop = container.scrollHeight;
+    } catch(e) {
+        tg.showAlert("Ошибка загрузки сообщений");
+    }
+}
+
+function closeTicketModal() {
+    document.getElementById('ticket-reply-modal').classList.remove('active');
+}
+
+// Отправка ответа админом
+async function sendAdminReply() {
+    const tid = document.getElementById('tm-id').value;
+    const uid = document.getElementById('tm-uid').value;
+    const text = document.getElementById('tm-reply-text').value;
+
+    if (!text.trim()) return;
+
+    try {
+        await apiFetch(`/api/admin/tickets/${tid}/reply`, {
+            method: 'POST',
+            body: JSON.stringify({ text: text, user_id: uid })
+        });
+        
+        tg.showAlert("Ответ отправлен!");
+        closeTicketModal();
+        loadAdminTickets(); // Обновляем список
+    } catch(e) {
+        tg.showAlert("Ошибка при отправке");
+    }
+}
+
+// Закрытие тикета админом
+async function adminCloseTicketAction() {
+    const tid = document.getElementById('tm-id').value;
+    if (!confirm("Закрыть этот тикет?")) return;
+
+    await apiFetch(`/api/admin/action/ticket/close/${tid}`, { method: 'POST' });
+    tg.showAlert("Тикет закрыт");
+    closeTicketModal();
+    loadAdminTickets();
+}
+
         // Старт
         tg.ready();
         tg.expand();
         loadData();
     </script>
+    <div class="modal" id="ticket-reply-modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 id="tm-title" style="margin:0;">Тикет</h3>
+            <span onclick="closeTicketModal()" style="cursor:pointer; font-size:24px;">×</span>
+        </div>
+        
+        <input type="hidden" id="tm-id">
+        <input type="hidden" id="tm-uid">
+
+        <div id="tm-chat-box" class="chat-container" style="height: 300px; margin-bottom: 15px;">
+            <p style="text-align:center; color:var(--text-dim);">Загрузка сообщений...</p>
+        </div>
+
+        <textarea id="tm-reply-text" rows="3" placeholder="Ваш ответ пользователю..." style="margin-bottom:10px;"></textarea>
+        
+        <div class="grid-2">
+            <button class="btn" onclick="sendAdminReply()">Отправить</button>
+            <button class="btn btn-secondary" onclick="adminCloseTicketAction()">Закрыть тикет</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
