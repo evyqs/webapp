@@ -594,6 +594,36 @@ function closeGuide() {
     document.getElementById('guide-modal').classList.remove('active');
 }
 
+        async function loadTickets() {
+    const d = await apiFetch("/api/user/tickets");
+    const container = document.getElementById('chat-box');
+    if (!d.messages || d.messages.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:var(--text-dim);">У вас пока нет обращений. Напишите первый вопрос!</p>';
+        return;
+    }
+    container.innerHTML = d.messages.map(m => `
+        <div class="msg ${m.role === 'admin' ? 'admin' : 'user'}">
+            ${m.text}
+            <div style="font-size:9px; opacity:0.5; margin-top:4px;">${m.date}</div>
+        </div>
+    `).join('');
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendTicketMessage() {
+    const input = document.getElementById('support-input');
+    if (!input.value.trim()) return;
+    
+    await apiFetch("/api/user/tickets/send", {
+        method: 'POST',
+        body: JSON.stringify({ text: input.value })
+    });
+    input.value = "";
+    loadTickets();
+}
+
+// Вызывай loadTickets() при переключении на вкладку
+
         // Запуск
         tg.ready(); 
         tg.expand(); 
