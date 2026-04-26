@@ -405,7 +405,7 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        const API = "https://heroism-parasite-denim.ngrok-free.dev"; 
+        const API = "https://illustration-predict-psychiatry-pcs.trycloudflare.com/api/init"; 
         let adminUsersData = [];
 
         function getInitData() {
@@ -801,52 +801,3 @@ async function adminCloseTicketAction() {
 </div>
 </body>
 </html>
-
-<script>
-function testMobileConnection() {
-    // 1. Получаем данные авторизации от самого Telegram
-    const initData = window.Telegram.WebApp.initData;
-
-    // Если мы открыли страницу в браузере, а не в Telegram, данных не будет
-    if (!initData) {
-        alert("⚠️ Внимание: initData пуст. Вы открыли страницу не через Telegram?");
-        return;
-    }
-
-    alert("⏳ Отправляем запрос...\nТокен готов.");
-
-    const API_URL = "https://illustration-predict-psychiatry-pcs.trycloudflare.com/api/init";
-
-fetch(API_URL, {
-    method: "GET",
-    headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + initData
-    }
-})
-    .then(async (response) => {
-        // Если сервер ответил, но с ошибкой (например, 403 или 404)
-        if (!response.ok) {
-            const errorText = await response.text();
-            alert("❌ Сервер вернул ошибку!\nСтатус: " + response.status + "\nОтвет: " + errorText);
-            throw new Error("Server error " + response.status);
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Если всё прошло идеально (Статус 200)
-        alert("✅ УСПЕХ!\nДанные получены:\nИмя: " + data.user.name + "\nСтатус: " + (data.user.is_active ? "Активен" : "Неактивен"));
-    })
-    .catch(error => {
-        // Если запрос даже не долетел до сервера (CORS, блокировка, опечатка в ссылке)
-        alert("🚫 ФАТАЛЬНАЯ ОШИБКА СЕТИ!\nЗапрос не ушел.\nПричина: " + error.message);
-    });
-}
-
-    // Ждем полсекунды после загрузки и запускаем тест
-setTimeout(() => {
-    window.Telegram.WebApp.ready(); // Говорим телеграму, что мы готовы
-    testMobileConnection();
-}, 500);
-
-</script>
