@@ -27,6 +27,19 @@
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; padding: 20px; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
         .modal-content { background: var(--card); padding: 20px; border-radius: 16px; width: 100%; max-width: 400px; border: 1px solid #27272a; max-height: 80vh; overflow-y: auto;}
+        /* Стили для расширенных инструкций */
+.step-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; font-size: 14px; }
+.step-num { 
+    background: var(--accent); color: white; min-width: 24px; height: 24px; 
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+    font-weight: bold; font-size: 12px; 
+}
+.download-area { 
+    display: flex; justify-content: space-between; align-items: center; 
+    background: #0f172a; padding: 12px; border-radius: 12px; margin-top: 15px;
+}
+.app-info { display: flex; align-items: center; gap: 10px; }
+.app-logo { width: 32px; height: 32px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -106,15 +119,46 @@
     </div>
 
     <div id="tab-help" class="tab-content">
-        <h2>Инструкции</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="btn btn-secondary" onclick="tg.showAlert('AppStore -> FoXray -> + -> Import from Clipboard')">🍏 iOS</button>
-            <button class="btn btn-secondary" onclick="tg.showAlert('Google Play -> v2rayNG -> + -> Импорт из буфера')">🤖 Android</button>
-            <button class="btn btn-secondary" onclick="tg.showAlert('Скачать v2rayN -> CTRL+V')">💻 Windows</button>
-            <button class="btn btn-secondary" onclick="tg.showAlert('Скачать V2RayU -> Import config from clipboard')">🍎 Mac</button>
+    <h2 style="margin-bottom: 20px;">Настройка подключения</h2>
+    
+    <div class="card" onclick="showGuide('ios')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <span style="font-size:24px;">🍏</span>
+            <div><b>iOS (iPhone, iPad)</b><br><small style="color:var(--text-dim)">Рекомендуем FoXray</small></div>
         </div>
-        <button class="btn" style="margin-top: 20px;" onclick="tg.sendData('support'); tg.close();">🆘 Написать в поддержку</button>
+        <span>❯</span>
     </div>
+
+    <div class="card" onclick="showGuide('android')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <span style="font-size:24px;">🤖</span>
+            <div><b>Android</b><br><small style="color:var(--text-dim)">Рекомендуем v2rayNG</small></div>
+        </div>
+        <span>❯</span>
+    </div>
+
+    <div class="card" onclick="showGuide('pc')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <span style="font-size:24px;">💻</span>
+            <div><b>Desktop (Win/Mac)</b><br><small style="color:var(--text-dim)">v2rayN или V2RayU</small></div>
+        </div>
+        <span>❯</span>
+    </div>
+
+    <button class="btn btn-secondary" style="margin-top: 20px;" onclick="tg.sendData('support'); tg.close();">🆘 Связаться с поддержкой</button>
+</div>
+
+<div class="modal" id="guide-modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 id="guide-title" style="margin:0;">Инструкция</h3>
+            <span onclick="closeGuide()" style="cursor:pointer; font-size:24px;">×</span>
+        </div>
+        <div id="guide-steps"></div>
+        <div id="guide-download"></div>
+        <button class="btn" style="margin-top:20px;" onclick="closeGuide()">Понятно</button>
+    </div>
+</div>
 
     <div id="tab-admin" class="tab-content">
         <h2>Управление</h2>
@@ -458,6 +502,71 @@
         function copyKey() { navigator.clipboard.writeText(document.getElementById('vless-key').value); tg.showAlert("Ключ скопирован!"); }
         function copyRef() { navigator.clipboard.writeText(document.getElementById('ref-link').value); tg.showAlert("Ссылка скопирована!"); }
         function buy(m, p) { tg.sendData(JSON.stringify({action: 'buy', months: m, price: p})); tg.close(); }
+
+        const guides = {
+    ios: {
+        title: "Настройка для iOS",
+        steps: [
+            "Скопируйте ваш VLESS ключ в профиле",
+            "Установите приложение FoXray из App Store",
+            "В приложении нажмите кнопку '+'",
+            "Выберите 'Import from Clipboard'",
+            "Нажмите на появившийся прокси и переключите тумблер 'Connect'"
+        ],
+        app: "FoXray",
+        link: "https://apps.apple.com/app/foxray/id6444819615"
+    },
+    android: {
+        title: "Настройка для Android",
+        steps: [
+            "Скопируйте ваш VLESS ключ",
+            "Установите v2rayNG из Google Play",
+            "Нажмите '+' вверху экрана",
+            "Выберите 'Импорт профиля из буфера обмена'",
+            "Нажмите на добавленный профиль и на иконку 'V' внизу"
+        ],
+        app: "v2rayNG",
+        link: "https://play.google.com/store/apps/details?id=com.v2ray.ang"
+    },
+    pc: {
+        title: "Настройка для ПК",
+        steps: [
+            "Windows: Скачайте v2rayN, нажмите CTRL+V",
+            "macOS: Скачайте V2RayU, выберите 'Import from clipboard'",
+            "Включите системный прокси в настройках клиента"
+        ],
+        app: "v2rayN / V2RayU",
+        link: "https://github.com/2dust/v2rayN/releases"
+    }
+};
+
+function showGuide(platform) {
+    const g = guides[platform];
+    document.getElementById('guide-title').innerText = g.title;
+    
+    let stepsHtml = g.steps.map((s, i) => `
+        <div class="step-item">
+            <div class="step-num">${i + 1}</div>
+            <div>${s}</div>
+        </div>
+    `).join('');
+    
+    document.getElementById('guide-steps').innerHTML = stepsHtml;
+    document.getElementById('guide-download').innerHTML = `
+        <div class="download-area">
+            <div class="app-info">
+                <b>${g.app}</b>
+            </div>
+            <a href="${g.link}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:bold;">СКАЧАТЬ</a>
+        </div>
+    `;
+    
+    document.getElementById('guide-modal').classList.add('active');
+}
+
+function closeGuide() {
+    document.getElementById('guide-modal').classList.remove('active');
+}
 
         // Запуск
         tg.ready(); 
