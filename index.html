@@ -178,20 +178,26 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        
-        // ⚠️ ВАЖНО: Если домен ngrok поменяется, обнови его только в этой строке:
         const API = "https://heroism-parasite-denim.ngrok-free.dev"; 
-        
         let adminUsersData = [];
 
-        // 🛡 УЛЬТИМАТИВНАЯ ФУНКЦИЯ: Вшивает токен в URL, обходя блокировку заголовков на телефонах
+        // 🛡 УМНАЯ ФУНКЦИЯ: Если библиотека тупит, достаем данные вручную из URL
+        function getInitData() {
+            let data = tg.initData;
+            if (!data) {
+                const urlParams = new URLSearchParams(window.location.hash.slice(1));
+                data = urlParams.get('tgWebAppData');
+            }
+            return data;
+        }
+
         function apiFetch(path, options = {}) {
-            if (!tg.initData) {
-                tg.showAlert("⚠️ Ошибка: телефон не передал данные. Перезапустите бота.");
+            const authData = getInitData();
+            if (!authData) {
+                tg.showAlert("⚠️ Ошибка: нет данных профиля. Убедитесь, что открываете приложение через КНОПКУ МЕНЮ, а не по ссылке.");
                 throw new Error("No initData");
             }
-            // Передаем auth=encodeURIComponent прямо в ссылку!
-            const url = `${API}${path}?auth=${encodeURIComponent(tg.initData)}`;
+            const url = `${API}${path}?auth=${encodeURIComponent(authData)}`;
             options.headers = { 
                 ...options.headers, 
                 'ngrok-skip-browser-warning': '1', 
@@ -350,7 +356,6 @@
             loadAdminData();
         }
 
-        // Шаблоны для рассылки
         const tpls = {
             manual: "",
             discount: "🎉 <b>Специальное предложение!</b>\n\nТолько сейчас отличные скидки на продление подписки. Успейте воспользоваться!",
@@ -386,7 +391,6 @@
             document.getElementById('new-static-name').value = '';
         }
 
-        // UI Helpers
         function switchTab(id, el) { 
             document.querySelectorAll('.tab-content, .nav-item').forEach(e => e.classList.remove('active')); 
             document.getElementById(id).classList.add('active'); 
@@ -402,16 +406,14 @@
         
         function copyKey() { navigator.clipboard.writeText(document.getElementById('vless-key').value); tg.showAlert("Ключ скопирован!"); }
         function copyRef() { navigator.clipboard.writeText(document.getElementById('ref-link').value); tg.showAlert("Ссылка скопирована!"); }
-        
-        function buy(m, p) { 
-            tg.sendData(JSON.stringify({action: 'buy', months: m, price: p})); 
-            tg.close(); 
-        }
+        function buy(m, p) { tg.sendData(JSON.stringify({action: 'buy', months: m, price: p})); tg.close(); }
 
-        // Запуск
-        tg.ready(); 
-        tg.expand(); 
-        loadData();
+        // Добавляем задержку, чтобы мобильный Telegram точно успел подгрузить данные
+        setTimeout(() => {
+            tg.ready(); 
+            tg.expand(); 
+            loadData();
+        }, 150);
     </script>
 </body>
 </html>
