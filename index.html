@@ -203,6 +203,7 @@
         function copyRef() { navigator.clipboard.writeText(document.getElementById('ref-link').value); tg.showAlert("Ссылка скопирована!"); }
         function buy(m, p) { tg.sendData(JSON.stringify({action: 'buy', months: m, price: p})); tg.close(); }
 
+        tg.ready();
         tg.expand(); loadData();
     </script>
 </body>
