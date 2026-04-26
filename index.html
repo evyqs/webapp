@@ -197,18 +197,27 @@
         </div>
 
         <div id="adm-server" style="display:none;">
-            <div class="card" style="font-family: monospace; font-size: 11px; color: var(--green);" id="server-stats"></div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-secondary" onclick="apiAction('server','restart-xui','0')">🔄 Рестарт X-UI</button>
-                <button class="btn btn-danger" onclick="if(confirm('Ребут VPS?')) apiAction('server','reboot','0')">⚠️ Ребут VPS</button>
-            </div>
-            <h3 style="margin-top:20px;">Статические профили</h3>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="text" id="new-static-name" placeholder="Имя профиля">
-                <button class="btn" style="margin:0; width: auto;" onclick="createStatic()">Создать</button>
-            </div>
-            <div id="static-list"></div>
-        </div>
+    <div class="card" style="font-family: monospace; font-size: 11px; color: var(--green);" id="server-stats"></div>
+    
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary" 
+            onclick="if(confirm('Перезапустить службу X-UI? Соединения могут прерваться на пару секунд.')) apiAction('server','restart-xui','0')">
+            🔄 Рестарт X-UI
+        </button>
+        
+        <button class="btn btn-danger" 
+            onclick="if(confirm('⚠️ ВНИМАНИЕ: Вы уверены, что хотите ПЕРЕЗАГРУЗИТЬ сервер? Все пользователи будут отключены до полного запуска VPS.')) apiAction('server','reboot','0')">
+            ⚠️ Ребут VPS
+        </button>
+    </div>
+
+    <h3 style="margin-top:20px;">Статические профили</h3>
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <input type="text" id="new-static-name" placeholder="Имя профиля (например: Laptop-Home)">
+        <button class="btn" style="margin:0; width: auto;" onclick="createStatic()">Создать</button>
+    </div>
+    <div id="static-list"></div>
+</div>
     </div>
 
     <div class="modal" id="user-modal">
