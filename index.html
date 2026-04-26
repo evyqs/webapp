@@ -463,73 +463,95 @@
     }
 }
 
-        async function loadData() {
-    const tg = window.Telegram.WebApp;
+       async function loadData() {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.MainButton.showProgress();
 
-    // 1. Сообщаем Telegram, что приложение загрузилось
-    tg.ready();
-    
-    // Показываем индикатор загрузки (фирменный телеграмовский)
-    tg.MainButton.showProgress();
-
-    // 2. Получаем данные авторизации
-    const initData = tg.initData;
-
-    if (!initData) {
-        console.error("InitData пуст. Запустите через Telegram!");
-        alert("Ошибка: Данные Telegram не найдены.");
-        tg.MainButton.hideProgress();
-        return;
-    }
-
-    // Твой актуальный адрес (порт 8443 и HTTPS)
-    const API_URL = "https://babatsiki.ru:8443/api/init";
-
-    try {
-        // 3. Выполняем запрос
-        const response = await fetch(API_URL, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                // Передаем данные в заголовке Authorization
-                "Authorization": initData 
+            const initData = tg.initData;
+            if (!initData) {
+                document.getElementById('user-name').innerText = "Запуск вне Telegram";
+                tg.MainButton.hideProgress();
+                return;
             }
-        });
 
-        // Проверяем, что ответ вообще пришел (защита от той самой ошибки undefined)
-        if (!response) {
-            throw new Error("Сервер не прислал ответ (Response undefined)");
+            const API_URL = "https://babatsiki.ru:8443/api/init";
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": initData 
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("Данные получены успешно:", data);
+                    
+                    // ВЫЗЫВАЕМ ОТРИСОВКУ
+                    renderInterface(data);
+                    
+                } else {
+                    const errorText = await response.text();
+                    alert(`Ошибка сервера (${response.status}): ${errorText}`);
+                }
+
+            } catch (error) {
+                console.error("Сетевая ошибка:", error);
+                alert("Ошибка соединения с сервером.");
+            } finally {
+                tg.MainButton.hideProgress();
+            }
         }
 
-        // 4. Обрабатываем ответ сервера
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Данные получены успешно:", data);
-            
-            // ТУТ ТВОЯ ЛОГИКА ОТРИСОВКИ (например, отображение баланса или конфига)
-            // renderInterface(data);
-            
-        } else {
-            // Если сервер ответил ошибкой (401, 404, 500 и т.д.)
-            const errorText = await response.text();
-            console.error("Ошибка сервера:", response.status, errorText);
-            alert(`Ошибка сервера (${response.status}): ${errorText}`);
+        function renderInterface(data) {
+            const { user, stats, ref } = data;
+
+            // 1. Имя и Аватар
+            document.getElementById('user-name').innerText = user.name || "Пользователь";
+            if (user.name) {
+                document.getElementById('avatar').innerText = user.name.charAt(0).toUpperCase();
+            }
+
+            // 2. Статус подписки
+            const statusSub = document.getElementById('status-sub');
+            if (user.is_active) {
+                statusSub.innerHTML = `<span class="status-badge">АКТИВНА ДО ${user.expiry}</span>`;
+            } else {
+                statusSub.innerHTML = `<span class="status-badge expired">ИСТЕКЛА ${user.expiry}</span>`;
+            }
+
+            // 3. Бан (если есть)
+            if (user.banned) {
+                document.getElementById('banned-alert').style.display = 'block';
+                document.getElementById('key-card').style.opacity = '0.5';
+                document.getElementById('key-card').style.pointerEvents = 'none';
+            }
+
+            // 4. Ключи и Рефералы
+            document.getElementById('vless-key').value = user.key || "Ключ не найден";
+            document.getElementById('ref-count').innerText = ref.count || 0;
+            document.getElementById('ref-link').value = ref.link || "";
+
+            // 5. Статистика (форматируем MB/GB)
+            document.getElementById('stat-down').innerText = formatTraffic(stats.down);
+            document.getElementById('stat-up').innerText = formatTraffic(stats.up);
+
+            // 6. Показываем админку, если пользователь админ
+            if (user.is_admin) {
+                document.getElementById('nav-admin').style.display = 'flex';
+            }
         }
 
-    } catch (error) {
-        // Ловим сетевые ошибки (порт закрыт, нет интернета, SSL не валиден)
-        console.error("Сетевая ошибка:", error);
-        alert("Не удалось связаться с сервером. Проверьте, открыт ли порт 8443!");
-    } finally {
-        // В любом случае убираем индикатор загрузки
-        tg.MainButton.hideProgress();
-    }
-}
-
-// Вызываем функцию при загрузке страницы
-window.onload = () => {
-    loadData();
-};
+        // Вспомогательная функция для красивого вывода трафика
+        function formatTraffic(mb) {
+            if (mb > 1024) {
+                return (mb / 1024).toFixed(2) + " GB";
+            }
+            return mb.toFixed(2) + " MB";
+        }
 
         // Вкладки
         function switchTab(id, el) { 
