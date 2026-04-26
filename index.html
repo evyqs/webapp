@@ -6,90 +6,79 @@
     <title>babatsiki VPN</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --accent: #007aff; --text: #fff; --gray: #8e8e93; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 16px; padding-bottom: 100px; }
-        .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-        .btn { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 12px; width: 100%; font-weight: 600; margin-top: 8px; }
-        .btn-outline { background: #2c2c2e; color: var(--accent); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(28,28,30,0.9); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 12px; border-top: 0.5px solid #333; }
-        .nav-item { color: var(--gray); text-decoration: none; font-size: 10px; display: flex; flex-direction: column; align-items: center; }
+        :root { --bg: #0b0b0c; --card: #18181b; --accent: #2563eb; --text: #f8fafc; --text-dim: #94a3b8; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 16px 16px 100px; line-height: 1.5; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid #27272a; }
+        .btn { background: var(--accent); color: white; border: none; border-radius: 12px; padding: 14px; width: 100%; font-weight: 600; font-size: 15px; transition: opacity 0.2s; cursor: pointer; margin-top: 10px; }
+        .btn-secondary { background: #27272a; color: var(--text); }
+        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(11,11,12,0.8); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #27272a; }
+        .nav-item { color: var(--text-dim); text-decoration: none; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .nav-item.active { color: var(--accent); }
-        .admin-only { display: none; border: 1px solid #ff3b30; }
-        .instr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .stat-val { font-size: 22px; font-weight: 800; display: block; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; background: #064e3b; color: #10b981; }
+        .status-badge.expired { background: #450a0a; color: #f87171; }
     </style>
 </head>
 <body>
 
     <div id="tab-profile" class="tab-content active">
-        <div class="card" style="display: flex; align-items: center; gap: 15px;">
-            <div id="avatar" style="width: 50px; height: 50px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px;">?</div>
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+            <div id="avatar" style="width: 55px; height: 55px; background: var(--accent); border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800;">?</div>
             <div>
-                <div id="user-name" style="font-weight: bold; font-size: 18px;">Загрузка...</div>
-                <div id="status-sub" style="font-size: 14px; color: var(--gray);">Статус: ...</div>
+                <div id="user-name" style="font-size: 20px; font-weight: 700;">Загрузка...</div>
+                <div id="status-sub"></div>
             </div>
         </div>
 
         <div class="card">
-            <div style="font-size: 14px; color: var(--gray); margin-bottom: 8px;">Ваш ключ VLESS</div>
-            <input type="text" id="vless-key" readonly style="width: 100%; background: #2c2c2e; border: none; padding: 10px; border-radius: 8px; color: var(--gray); font-family: monospace; font-size: 12px; box-sizing: border-box;">
-            <button class="btn" onclick="copyKey()">Копировать ключ</button>
-        </div>
-
-        <div style="display: flex; gap: 10px;">
-            <div class="card" style="flex: 1;">
-                <div style="font-size: 12px; color: var(--gray);">📥 Скачано</div>
-                <div id="stat-down" style="font-size: 18px; font-weight: bold;">0.0 MB</div>
-            </div>
-            <div class="card" style="flex: 1;">
-                <div style="font-size: 12px; color: var(--gray);">📤 Отдано</div>
-                <div id="stat-up" style="font-size: 18px; font-weight: bold;">0.0 MB</div>
+            <span style="color: var(--text-dim); font-size: 13px;">Ключ для подключения (VLESS)</span>
+            <input type="text" id="vless-key" readonly style="width: 100%; background: #0f172a; border: 1px solid #1e293b; padding: 12px; border-radius: 10px; color: var(--text-dim); font-family: monospace; font-size: 11px; margin-top: 8px; box-sizing: border-box;">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" onclick="copyKey()">Копировать</button>
+                <button class="btn btn-secondary" onclick="resetKey()">Обновить</button>
             </div>
         </div>
 
-        <div class="card">
-            <h3>🎁 Рефералы</h3>
-            <p style="font-size: 14px; color: var(--gray);">Приглашено друзей: <b id="ref-count">0</b></p>
-            <button class="btn btn-outline" onclick="copyRef()">Копировать ссылку</button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="card"><span style="color: var(--text-dim); font-size: 12px;">📥 Скачано</span><span class="stat-val" id="stat-down">0 MB</span></div>
+            <div class="card"><span style="color: var(--text-dim); font-size: 12px;">📤 Отдано</span><span class="stat-val" id="stat-up">0 MB</span></div>
         </div>
     </div>
 
     <div id="tab-shop" class="tab-content">
-        <h2>Магазин тарифов</h2>
+        <h2 style="margin-bottom: 20px;">Магазин</h2>
         <div class="card">
-            <h3>🚀 1 месяц</h3>
-            <p style="color: var(--gray);">Скорость до 1 Гбит/с</p>
-            <div style="font-size: 20px; font-weight: bold;">150 ₽</div>
-            <button class="btn" onclick="buy(1, 150)">Оплатить</button>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><h3 style="margin:0">🚀 Премиум</h3><p style="color:var(--text-dim); font-size:14px; margin:5px 0">1 месяц доступа</p></div>
+                <div style="font-size: 20px; font-weight: 800;">150 ₽</div>
+            </div>
+            <button class="btn" onclick="buy(1, 150)">Выбрать</button>
         </div>
-        <div class="card">
-            <h3>💎 3 месяца</h3>
-            <p style="color: var(--gray);">Выгода 15%</p>
-            <div style="font-size: 20px; font-weight: bold;">400 ₽</div>
-            <button class="btn" onclick="buy(3, 400)">Оплатить</button>
+        <div class="card" style="border: 1px solid var(--accent)">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div><h3 style="margin:0">💎 Оптимальный</h3><p style="color:var(--text-dim); font-size:14px; margin:5px 0">3 месяца (-15%)</p></div>
+                <div style="font-size: 20px; font-weight: 800;">400 ₽</div>
+            </div>
+            <button class="btn" onclick="buy(3, 400)">Выбрать</button>
         </div>
     </div>
 
     <div id="tab-help" class="tab-content">
-        <h2>Как подключить?</h2>
-        <div class="instr-grid">
-            <button class="btn btn-outline" onclick="alert('Скачайте Shadowrocket или FoXray в App Store')">🍏 iOS</button>
-            <button class="btn btn-outline" onclick="alert('Скачайте v2rayNG в Play Market')">🤖 Android</button>
-            <button class="btn btn-outline" onclick="alert('Скачайте v2rayN на GitHub')">💻 Windows</button>
-            <button class="btn btn-outline" onclick="alert('Скачайте V2RayU')">🍎 Mac</button>
+        <h2>Помощь</h2>
+        <p style="color: var(--text-dim)">Выберите ваше устройство для инструкции:</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn btn-secondary" onclick="tg.showAlert('1. Скачайте FoXray\n2. Скопируйте ключ\n3. Нажмите + в приложении')">🍏 iOS</button>
+            <button class="btn btn-secondary" onclick="tg.showAlert('1. Скачайте v2rayNG\n2. Скопируйте ключ\n3. Импорт из буфера')">🤖 Android</button>
         </div>
-        <div class="card" style="margin-top: 20px;">
-            <h3>🆘 Поддержка</h3>
-            <p style="color: var(--gray);">Если что-то не работает — пишите нам.</p>
-            <button class="btn btn-outline" onclick="tg.openTelegramLink('https://t.me/твой_аккаунт')">Написать админу</button>
-        </div>
+        <button class="btn" style="margin-top: 20px;" onclick="tg.openTelegramLink('https://t.me/твой_ник')">🆘 Поддержка</button>
     </div>
 
     <div id="tab-admin" class="tab-content">
-        <h2>Панель управления</h2>
-        <div id="admin-user-list">
-            </div>
+        <h2>Админ-панель</h2>
+        <div id="admin-user-list"></div>
     </div>
 
     <nav class="nav">
@@ -101,54 +90,45 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        const API_URL = "https://heroism-parasite-denim.ngrok-free.dev";
+        const API_URL = "https://heroism-parasite-denim.ngrok-free.dev"; 
 
         async function loadData() {
-            try {
-                const response = await fetch(`${API_URL}/api/init`, {
-                    headers: { 'Authorization': tg.initData, 'ngrok-skip-browser-warning': 'true' }
-                });
-                const data = await response.json();
+            const r = await fetch(`${API_URL}/api/init`, { headers: {'Authorization': tg.initData, 'ngrok-skip-browser-warning': '1'} });
+            const d = await r.json();
+            document.getElementById('user-name').innerText = d.user.name;
+            document.getElementById('avatar').innerText = d.user.name[0];
+            document.getElementById('status-sub').innerHTML = d.user.is_active ? `<span class="status-badge">До ${d.user.expiry}</span>` : `<span class="status-badge expired">Истекла</span>`;
+            document.getElementById('vless-key').value = d.user.key || "Ключ не создан";
+            document.getElementById('stat-up').innerText = d.stats.up + " MB";
+            document.getElementById('stat-down').innerText = d.stats.down + " MB";
+            if (d.user.is_admin) { document.getElementById('nav-admin').style.display = 'flex'; loadAdminUsers(); }
+        }
 
-                // Заполнение профиля
-                document.getElementById('user-name').innerText = data.user.name;
-                document.getElementById('avatar').innerText = data.user.name.charAt(0);
-                document.getElementById('status-sub').innerText = data.user.is_active ? `Активен до ${data.user.expiry}` : "Подписка истекла";
-                document.getElementById('vless-key').value = data.user.key || "Нет ключа";
-                document.getElementById('stat-up').innerText = data.stats.up + " MB";
-                document.getElementById('stat-down').innerText = data.stats.down + " MB";
-                document.getElementById('ref-count').innerText = data.ref.count;
-
-                // Показ админки если юзер - админ
-                if (data.user.is_admin) {
-                    document.getElementById('nav-admin').style.display = 'flex';
-                    loadAdminUsers();
+        async function resetKey() {
+            tg.showConfirm("Вы уверены, что хотите сбросить ключ? Старый перестанет работать.", async (ok) => {
+                if (ok) {
+                    const r = await fetch(`${API_URL}/api/user/reset_key`, { method: 'POST', headers: {'Authorization': tg.initData} });
+                    const d = await r.json();
+                    document.getElementById('vless-key').value = d.new_key;
+                    tg.showAlert("Ключ успешно обновлен!");
                 }
-            } catch (e) { console.error(e); }
+            });
         }
 
         async function loadAdminUsers() {
-            const response = await fetch(`${API_URL}/api/admin/users`, {
-                headers: { 'Authorization': tg.initData, 'ngrok-skip-browser-warning': 'true' }
-            });
-            const users = await response.json();
-            const container = document.getElementById('admin-user-list');
-            container.innerHTML = users.map(u => `
-                <div class="card">
-                    <b>${u.name}</b> (ID: ${u.id})<br>
-                    <small>До: ${u.expiry}</small>
-                    <button class="btn" style="padding: 5px; font-size: 12px;" onclick="addTime(${u.id})">+30 дней</button>
+            const r = await fetch(`${API_URL}/api/admin/users`, { headers: {'Authorization': tg.initData} });
+            const users = await r.json();
+            document.getElementById('admin-user-list').innerHTML = users.map(u => `
+                <div class="card" style="padding:15px; font-size:13px">
+                    <b>${u.name}</b><br><span style="color:var(--text-dim)">До: ${u.expiry}</span>
+                    <button class="btn" style="padding:5px; height:auto; margin-top:5px" onclick="addTime(${u.id})">+30 дней</button>
                 </div>
             `).join('');
         }
 
         async function addTime(id) {
-            await fetch(`${API_URL}/api/admin/add_time/${id}`, {
-                method: 'POST',
-                headers: { 'Authorization': tg.initData, 'ngrok-skip-browser-warning': 'true' }
-            });
-            tg.showAlert('Время добавлено!');
-            loadAdminUsers();
+            await fetch(`${API_URL}/api/admin/add_time/${id}`, { method: 'POST', headers: {'Authorization': tg.initData} });
+            tg.showAlert("Время добавлено!"); loadAdminUsers();
         }
 
         function switchTab(id, el) {
@@ -159,13 +139,15 @@
         }
 
         function copyKey() {
-            navigator.clipboard.writeText(document.getElementById('vless-key').value);
-            tg.showAlert('Ключ скопирован!');
+            const val = document.getElementById('vless-key').value;
+            if(!val) return;
+            navigator.clipboard.writeText(val);
+            tg.showAlert("Ключ скопирован в буфер!");
         }
 
-        function buy(months, price) {
-            tg.showConfirm(`Купить ${months} мес. за ${price}₽?`, (ok) => {
-                if (ok) tg.sendData(JSON.stringify({action: 'buy', months, price}));
+        function buy(m, p) {
+            tg.showConfirm(`Купить тариф на ${m} мес. за ${p}₽?`, (ok) => {
+                if(ok) tg.sendData(JSON.stringify({action: 'buy', months: m, price: p}));
             });
         }
 
