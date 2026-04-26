@@ -12,7 +12,7 @@
             --accent: #2563eb; 
             --red: #ef4444; 
             --green: #10b981; 
-            --text: #f8fafc; 
+            --text: #f8fafc;  
             --text-dim: #94a3b8; 
         }
         
@@ -815,11 +815,9 @@ function testMobileConnection() {
 
     alert("⏳ Отправляем запрос...\nТокен готов.");
 
-    // 2. ВАЖНО: Вставьте сюда вашу ссылку от ngrok (с https://)
-    const API_URL = "https://ВАША-ССЫЛКА.ngrok-free.app/api/init";
+    const API_URL = "https://illustration-predict-psychiatry-pcs.trycloudflare.com/api/init";
 
-    // 3. Делаем запрос
-    fetch("https://a2c9e03916412d.lhr.life/api/init", {
+fetch(API_URL, {
     method: "GET",
     headers: {
         "Content-Type": "application/json",
