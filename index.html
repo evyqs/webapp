@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VPN Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Системные цвета Telegram */
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #1c1c1d);
+            --text-color: var(--tg-theme-text-color, #ffffff);
+            --hint-color: var(--tg-theme-hint-color, #8e8e93);
+            --button-color: var(--tg-theme-button-color, #007aff);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Контейнер для страниц */
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            padding-bottom: 80px; /* Отступ для нижнего меню */
+        }
+
+        /* Скрываем неактивные страницы */
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { font-size: 24px; margin-top: 0; margin-bottom: 5px; }
+        p.subtitle { color: var(--hint-color); font-size: 14px; margin-bottom: 25px; }
+
+        /* Стили Профиля */
+        .profile-card {
+            background-color: var(--secondary-bg);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--button-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .status-box {
+            background-color: rgba(48, 209, 88, 0.1);
+            color: #30d158;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        /* Стили Магазина (из прошлого шага) */
+        .tariffs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .tariff-card {
+            background-color: var(--secondary-bg);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tariff-card:active { transform: scale(0.96); }
+        .tariff-card.active {
+            border-color: var(--button-color);
+            background-color: rgba(0, 122, 255, 0.1);
+        }
+
+        .tariff-months { font-size: 28px; font-weight: bold; margin-bottom: 5px; }
+        .tariff-label { font-size: 14px; color: var(--hint-color); margin-bottom: 15px; }
+        .tariff-price { font-size: 18px; font-weight: 600; color: var(--button-color); }
+        .discount {
+            background-color: #ff3b30; color: white; font-size: 11px;
+            padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 10px;
+        }
+
+        /* Нижнее навигационное меню */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--secondary-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 20px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            border-top: 1px solid rgba(128, 128, 128, 0.2);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--hint-color);
+            cursor: pointer;
+            font-size: 12px;
+            gap: 5px;
+            width: 33%;
+        }
+
+        .nav-item.active {
+            color: var(--button-color);
+        }
+
+        .nav-icon { font-size: 24px; }
+    </style>
+</head>
+<body>
+
+    <div class="content">
+        <div id="page-profile" class="page active">
+            <h1>Профиль</h1>
+            <div class="profile-card">
+                <div class="profile-avatar" id="user-avatar">👤</div>
+                <div>
+                    <div style="font-size: 18px; font-weight: bold;" id="user-name">Загрузка...</div>
+                    <div style="font-size: 14px; color: var(--hint-color);" id="user-id">ID: ...</div>
+                </div>
+            </div>
+
+            <div class="status-box">
+                🟢 Ваш VPN работает отлично!<br>
+                <span style="font-size: 12px; font-weight: normal; color: var(--text-color);">Осталось: 0 дней (Тестовый режим)</span>
+            </div>
+            
+            <p style="color: var(--hint-color); font-size: 14px; text-align: center;">
+                Перейдите в раздел "Магазин", чтобы продлить подписку.
+            </p>
+        </div>
+
+        <div id="page-shop" class="page">
+            <h1>Магазин</h1>
+            <p class="subtitle">Выберите выгодный тариф</p>
+            <div class="tariffs-grid">
+                <div class="tariff-card" data-months="1" data-price="150">
+                    <div class="tariff-months">1</div><div class="tariff-label">месяц</div><div class="tariff-price">150 ₽</div>
+                </div>
+                <div class="tariff-card" data-months="3" data-price="400">
+                    <div class="discount">-11%</div><div class="tariff-months">3</div><div class="tariff-label">месяца</div><div class="tariff-price">400 ₽</div>
+                </div>
+                <div class="tariff-card" data-months="6" data-price="750">
+                    <div class="discount">-16%</div><div class="tariff-months">6</div><div class="tariff-label">месяцев</div><div class="tariff-price">750 ₽</div>
+                </div>
+                <div class="tariff-card" data-months="12" data-price="1200">
+                    <div class="discount">-33%</div><div class="tariff-months">12</div><div class="tariff-label">месяцев</div><div class="tariff-price">1200 ₽</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-info" class="page">
+            <h1>Помощь</h1>
+            <p>Здесь будет инструкция по настройке VPN, ссылки на скачивание приложений (WireGuard/V2Ray) и контакты техподдержки.</p>
+            <div style="background: var(--secondary-bg); padding: 15px; border-radius: 12px; text-align: center; margin-top: 20px;">
+                💬 Написать в поддержку
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-target="page-profile">
+            <div class="nav-icon">👤</div>
+            <span>Профиль</span>
+        </div>
+        <div class="nav-item" data-target="page-shop">
+            <div class="nav-icon">🛒</div>
+            <span>Магазин</span>
+        </div>
+        <div class="nav-item" data-target="page-info">
+            <div class="nav-icon">ℹ️</div>
+            <span>Помощь</span>
+        </div>
+    </nav>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        // 1. ЗАГРУЗКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ ИЗ TELEGRAM
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('user-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+            document.getElementById('user-id').innerText = 'ID: ' + user.id;
+            // Делаем аватарку из первой буквы имени
+            document.getElementById('user-avatar').innerText = user.first_name.charAt(0).toUpperCase();
+        } else {
+            document.getElementById('user-name').innerText = "Гость";
+        }
+
+        // 2. ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ВЛАДОК (НАВИГАЦИЯ)
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // Прячем главную кнопку Telegram, если ушли из магазина
+                tg.MainButton.hide(); 
+
+                // Обновляем активную кнопку меню
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+
+                // Переключаем страницы
+                const targetId = item.getAttribute('data-target');
+                pages.forEach(page => {
+                    if (page.id === targetId) {
+                        page.classList.add('active');
+                    } else {
+                        page.classList.remove('active');
+                    }
+                });
+
+                // Если вернулись в магазин и тариф уже выбран - показываем кнопку снова
+                if (targetId === 'page-shop' && selectedTariff) {
+                    tg.MainButton.show();
+                }
+            });
+        });
+
+        // 3. ЛОГИКА ВЫБОРА ТАРИФА (Осталась прежней)
+        let selectedTariff = null;
+        const cards = document.querySelectorAll('.tariff-card');
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                cards.forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                
+                selectedTariff = {
+                    months: parseInt(card.dataset.months),
+                    price: parseInt(card.dataset.price)
+                };
+
+                tg.MainButton.text = `Оплатить ${selectedTariff.price} ₽`;
+                tg.MainButton.color = tg.themeParams.button_color || "#007aff";
+                tg.MainButton.show();
+            });
+        });
+
+        // 4. ОТПРАВКА ДАННЫХ БОТУ
+        tg.MainButton.onClick(() => {
+            if (selectedTariff) {
+                tg.sendData(JSON.stringify({
+                    action: 'buy_subscription',
+                    months: selectedTariff.months,
+                    price: selectedTariff.price
+                }));
+            }
+        });
+    </script>
+</body>
+</html>
