@@ -579,15 +579,23 @@
         }
         
         container.innerHTML = d.tickets.map(t => `
-        <div class="card" onclick="openTicketModal(${t.id}, '${t.user_name}', ${t.user_id})" style="cursor:pointer; border-left: 4px solid ${t.status === 'open' ? 'var(--accent)' : 'var(--text-dim)'};">
-            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
-                <b>${t.user_name}</b>
-                <span style="font-size:10px; color:var(--text-dim)">#${t.id} | ${t.date}</span>
+            <div class="card" 
+                 onclick="openTicketModal(${t.id}, '${t.user_name}', ${t.user_id})" 
+                 style="cursor:pointer; border-left: 4px solid ${t.status === 'open' ? 'var(--accent)' : 'var(--text-dim)'}; transition: transform 0.1s;">
+                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:16px;">${t.status === 'open' ? '✉️' : '📁'}</span>
+                        <b>${t.user_name}</b>
+                    </div>
+                    <span style="font-size:10px; color:var(--text-dim)">#${t.id} | ${t.date}</span>
+                </div>
+                <p style="font-size:13px; margin: 5px 0; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${t.last_message}
+                </p>
+                <div style="font-size:11px; color:var(--accent); margin-top:5px;">Нажмите, чтобы ответить →</div>
             </div>
-            <p style="font-size:13px; margin: 5px 0; color: #e2e8f0;">${t.last_message}</p>
-        </div>
-    `).join('');
-} catch(e) {
+        `).join('');
+    } catch(e) {
         container.innerHTML = '<p style="text-align:center; color:var(--red);">Ошибка загрузки тикетов</p>';
     }
 }
