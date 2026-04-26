@@ -68,10 +68,41 @@
         </div>
     </div>
 
-    <div id="tab-shop" class="tab-content">
-        <h2>Магазин</h2>
-        <div class="card"><h3>🚀 1 месяц</h3><b style="font-size: 20px;">150 ₽</b><button class="btn" onclick="buy(1, 150)">Оплатить</button></div>
-        <div class="card" style="border-color: var(--accent)"><h3>💎 3 месяца</h3><b style="font-size: 20px;">400 ₽</b><button class="btn" onclick="buy(3, 400)">Оплатить</button></div>
+    <<div id="tab-shop" class="tab-content">
+        <h2>Магазин подписок</h2>
+        
+        <div class="card">
+            <h3>🚀 1 месяц</h3>
+            <b style="font-size: 20px;">250 ₽</b>
+            <button class="btn" onclick="buy(1, 250)">Оплатить</button>
+        </div>
+
+        <div class="card" style="border-color: var(--accent);">
+            <span class="status-badge" style="float:right; background: var(--accent);">ВЫГОДА 10%</span>
+            <h3>💎 3 месяца</h3>
+            <span style="text-decoration: line-through; color: var(--text-dim); font-size: 14px;">750 ₽</span>
+            <b style="font-size: 20px; display: block; margin-bottom: 5px;">675 ₽</b>
+            <p style="font-size: 12px; color: var(--green); margin: 0;">Экономия: 75 ₽</p>
+            <button class="btn" onclick="buy(3, 675)">Оплатить</button>
+        </div>
+
+        <div class="card">
+            <span class="status-badge" style="float:right; background: #6d28d9;">ВЫГОДА 20%</span>
+            <h3>🌟 6 месяцев</h3>
+            <span style="text-decoration: line-through; color: var(--text-dim); font-size: 14px;">1500 ₽</span>
+            <b style="font-size: 20px; display: block; margin-bottom: 5px;">1200 ₽</b>
+            <p style="font-size: 12px; color: var(--green); margin: 0;">Экономия: 300 ₽</p>
+            <button class="btn" onclick="buy(6, 1200)">Оплатить</button>
+        </div>
+
+        <div class="card" style="border: 2px solid var(--green);">
+            <span class="status-badge" style="float:right;">ВЫГОДА 30%</span>
+            <h3>👑 12 месяцев</h3>
+            <span style="text-decoration: line-through; color: var(--text-dim); font-size: 14px;">3000 ₽</span>
+            <b style="font-size: 20px; display: block; margin-bottom: 5px;">2100 ₽</b>
+            <p style="font-size: 12px; color: var(--green); margin: 0;">Экономия: 900 ₽</p>
+            <button class="btn" onclick="buy(12, 2100)">Оплатить</button>
+        </div>
     </div>
 
     <div id="tab-help" class="tab-content">
