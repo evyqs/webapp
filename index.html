@@ -23,10 +23,9 @@
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: #064e3b; color: var(--green); }
         .status-badge.expired { background: #450a0a; color: var(--red); }
         input, textarea, select { width: 100%; background: #0f172a; border: 1px solid #1e293b; padding: 10px; border-radius: 8px; color: var(--text); box-sizing: border-box; font-family: inherit; margin-bottom: 10px;}
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; padding: 20px; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
-        .modal-content { background: var(--card); padding: 20px; border-radius: 16px; width: 100%; max-width: 400px; border: 1px solid #27272a; max-height: 80vh; overflow-y: auto;}
+        .modal-content { background: var(--card); padding: 20px; border-radius: 16px; width: 100%; max-width: 400px; border: 1px solid #27272a; }
     </style>
 </head>
 <body>
@@ -39,399 +38,106 @@
                 <div id="status-sub"></div>
             </div>
         </div>
-
-        <div id="banned-alert" class="card" style="display: none; border-color: var(--red); background: rgba(239,68,68,0.1);">
-            <h3 style="color: var(--red); margin: 0;">🚫 Вы заблокированы</h3>
-            <p style="margin: 5px 0 0; font-size: 13px; color: var(--text-dim);">Доступ к сети ограничен администратором.</p>
-        </div>
-
         <div class="card" id="key-card">
             <span style="color: var(--text-dim); font-size: 12px;">Ваш VLESS ключ</span>
             <input type="text" id="vless-key" readonly>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" onclick="copyKey()">Копировать</button>
-                <button class="btn btn-secondary" onclick="generateKey()" id="btn-gen-key">Сбросить</button>
-            </div>
-            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="checkStatus()">🔍 Статус подключения (Сервер)</button>
+            <button class="btn" onclick="copyKey()">Копировать ключ</button>
         </div>
-
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div class="card"><span style="color: var(--text-dim); font-size: 12px;">📥 Скачано</span><br><b style="font-size: 18px;" id="stat-down">0 MB</b></div>
-            <div class="card"><span style="color: var(--text-dim); font-size: 12px;">📤 Отдано</span><br><b style="font-size: 18px;" id="stat-up">0 MB</b></div>
-        </div>
-
-        <div class="card">
-            <h3 style="margin: 0 0 10px 0;">🎁 Партнерская программа</h3>
-            <p style="font-size: 13px; color: var(--text-dim); margin-top:0;">Приглашено: <b id="ref-count">0</b> чел.</p>
-            <input type="text" id="ref-link" readonly>
-            <button class="btn btn-secondary" onclick="copyRef()">Поделиться ссылкой</button>
+            <div class="card"><span>📥 Скачано</span><br><b id="stat-down">0 MB</b></div>
+            <div class="card"><span>📤 Отдано</span><br><b id="stat-up">0 MB</b></div>
         </div>
     </div>
 
     <div id="tab-shop" class="tab-content">
         <h2>Магазин</h2>
-        <div class="card"><h3>🚀 1 месяц</h3><b style="font-size: 20px;">150 ₽</b><button class="btn" onclick="buy(1, 150)">Оплатить</button></div>
-        <div class="card" style="border-color: var(--accent)"><h3>💎 3 месяца</h3><b style="font-size: 20px;">400 ₽</b><button class="btn" onclick="buy(3, 400)">Оплатить</button></div>
-    </div>
-
-    <div id="tab-help" class="tab-content">
-        <h2>Инструкции</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="btn btn-secondary" onclick="tg.showAlert('AppStore -> FoXray -> + -> Import from Clipboard')">🍏 iOS</button>
-            <button class="btn btn-secondary" onclick="tg.showAlert('Google Play -> v2rayNG -> + -> Импорт из буфера')">🤖 Android</button>
-            <button class="btn btn-secondary" onclick="tg.showAlert('Скачать v2rayN -> CTRL+V')">💻 Windows</button>
-            <button class="btn btn-secondary" onclick="tg.showAlert('Скачать V2RayU -> Import config from clipboard')">🍎 Mac</button>
-        </div>
-        <button class="btn" style="margin-top: 20px;" onclick="tg.sendData('support'); tg.close();">🆘 Написать в поддержку</button>
+        <div class="card">🚀 1 месяц / 150 ₽ <button class="btn" onclick="buy(1, 150)">Купить</button></div>
     </div>
 
     <div id="tab-admin" class="tab-content">
-        <h2>Управление</h2>
-        <div class="admin-nav">
-            <div class="admin-tab active" onclick="switchAdmin('adm-users', this)">Пользователи</div>
-            <div class="admin-tab" onclick="switchAdmin('adm-mass', this)">Рассылка</div>
-            <div class="admin-tab" onclick="switchAdmin('adm-server', this)">Сервер & Статика</div>
-        </div>
-
-        <div id="adm-users">
-            <select id="user-filter" onchange="renderUsers()">
-                <option value="all">Все пользователи</option>
-                <option value="active">С подпиской</option>
-                <option value="inactive">Без подписки</option>
-            </select>
-            <div id="user-list-container"></div>
-        </div>
-        
-        <div id="adm-mass" style="display:none;">
-            <div class="card">
-                <select id="bc-target">
-                    <option value="all">Всем пользователям</option>
-                    <option value="active">Только с подпиской</option>
-                    <option value="inactive">Только без подписки</option>
-                </select>
-                <select id="bc-template" onchange="applyTemplate()">
-                    <option value="manual">Написать вручную</option>
-                    <option value="discount">Акция / Скидка</option>
-                    <option value="maintenance">Тех. работы</option>
-                    <option value="update">Обновление ключей</option>
-                </select>
-                <textarea id="bc-text" rows="6" placeholder="Текст рассылки..."></textarea>
-                <input type="text" id="bc-btn-name" placeholder="Текст на кнопке (необязательно)">
-                <input type="text" id="bc-btn-url" placeholder="URL ссылки (начинается с http...)">
-                <button class="btn" onclick="sendBroadcast()">Отправить рассылку</button>
-            </div>
-        </div>
-
-        <div id="adm-server" style="display:none;">
-            <div class="card" style="font-family: monospace; font-size: 11px; color: var(--green);" id="server-stats"></div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-secondary" onclick="apiAction('server','restart-xui','0')">🔄 Рестарт X-UI</button>
-                <button class="btn btn-danger" onclick="if(confirm('Ребут VPS?')) apiAction('server','reboot','0')">⚠️ Ребут VPS</button>
-            </div>
-            <h3 style="margin-top:20px;">Статические профили</h3>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="text" id="new-static-name" placeholder="Имя профиля">
-                <button class="btn" style="margin:0; width: auto;" onclick="createStatic()">Создать</button>
-            </div>
-            <div id="static-list"></div>
-        </div>
-    </div>
-
-    <div class="modal" id="user-modal">
-        <div class="modal-content">
-            <h3 id="um-name" style="margin-top: 0;">User Name</h3>
-            <input type="hidden" id="um-id">
-            
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 5px;">Управление временем (+ / -):</p>
-            <div class="grid-4">
-                <input type="number" id="um-m" placeholder="Мес" value="0">
-                <input type="number" id="um-d" placeholder="Дни" value="0">
-                <input type="number" id="um-h" placeholder="Час" value="0">
-                <input type="number" id="um-min" placeholder="Мин" value="0">
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" style="background: var(--green);" onclick="manageTime('add')">Добавить</button>
-                <button class="btn btn-danger" onclick="manageTime('remove')">Отнять</button>
-            </div>
-            
-            <hr style="border: 0; border-top: 1px solid #27272a; margin: 15px 0;">
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 5px;">Отправка данных:</p>
-            <button class="btn btn-secondary" onclick="promptReceipt()">🧾 Отправить чек</button>
-            <button class="btn btn-secondary" onclick="promptEmail()">📧 Отправить ключ на Email</button>
-            
-            <hr style="border: 0; border-top: 1px solid #27272a; margin: 15px 0;">
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 5px;">Ключ пользователя:</p>
-            <input type="text" id="um-key" readonly onclick="navigator.clipboard.writeText(this.value); tg.showAlert('Ключ скопирован!');">
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-danger" id="um-ban-btn" onclick="toggleBan()">Бан</button>
-                <button class="btn btn-secondary" onclick="closeModal()">Закрыть</button>
-            </div>
-        </div>
+        <h2>Админ-панель</h2>
+        <div id="user-list-container"></div>
     </div>
 
     <nav class="nav">
-        <a href="#" class="nav-item active" onclick="switchTab('tab-profile', this)"><span>👤</span>Профиль</a>
-        <a href="#" class="nav-item" onclick="switchTab('tab-shop', this)"><span>🛒</span>Магазин</a>
-        <a href="#" class="nav-item" onclick="switchTab('tab-help', this)"><span>❓</span>Помощь</a>
-        <a href="#" id="nav-admin" class="nav-item" style="display: none;" onclick="switchTab('tab-admin', this)"><span>⚙️</span>Админ</a>
+        <a href="#" class="nav-item active" onclick="switchTab('tab-profile', this)">Профиль</a>
+        <a href="#" class="nav-item" onclick="switchTab('tab-shop', this)">Магазин</a>
+        <a href="#" id="nav-admin" class="nav-item" style="display: none;" onclick="switchTab('tab-admin', this)">Админ</a>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
-        const API = "https://heroism-parasite-denim.ngrok-free.dev"; 
-        
-        let adminUsersData = [];
+        const API = "https://heroism-parasite-denim.ngrok-free.dev";
 
-        // 🛡 Вытаскиваем токен авторизации надежным способом
-        // 🛡 СВЕРХ-АГРЕССИВНЫЙ ПОИСК ТОКЕНА
+        // 1. Функция получения данных авторизации
         function getInitData() {
-            // 1. Стандартный способ Телеграма
             if (tg.initData) return tg.initData;
-
-            // 2. Ручной поиск по всему URL (если браузер искривил ссылку)
-            const fullUrl = window.location.href;
-            if (fullUrl.includes('tgWebAppData=')) {
-                // Вырезаем токен силой прямо из текста ссылки
-                const raw = fullUrl.split('tgWebAppData=')[1].split('&')[0];
-                return decodeURIComponent(raw);
-            }
-            
-            return null;
+            const urlParams = new URLSearchParams(window.location.hash.slice(1));
+            return urlParams.get('tgWebAppData');
         }
 
-        // 🛡 УЛЬТИМАТИВНАЯ ФУНКЦИЯ ЗАПРОСОВ: Токен летит в URL (никаких 403 на телефонах)
-        // 🛡 УЛЬТИМАТИВНАЯ ФУНКЦИЯ ЗАПРОСОВ С ЖУЧКОМ
-        function apiFetch(path, options = {}) {
+        // 2. ФУНКЦИЯ ЗАПРОСОВ К API (ТЕПЕРЬ ОНА ОПРЕДЕЛЕНА!)
+        async function apiFetch(path, options = {}) {
             const authData = getInitData();
-            
-            if (!authData) {
-                // ВЫВОДИМ ПОЛНУЮ ССЫЛКУ НА ЭКРАН ТЕЛЕФОНА!
-                tg.showAlert("🔴 ДЕБАГ ССЫЛКИ:\n\n" + window.location.href);
-                throw new Error("No initData");
-            }
-            
-            const url = `${API}${path}?auth=${encodeURIComponent(authData)}`;
-            options.headers = { 
-                ...options.headers, 
-                'ngrok-skip-browser-warning': '1', 
-                'Content-Type': 'application/json' 
-            };
+            if (!authData) return null;
+            const url = `${API}${path}${path.includes('?') ? '&' : '?'}auth=${encodeURIComponent(authData)}`;
+            options.headers = { ...options.headers, 'ngrok-skip-browser-warning': '1' };
             return fetch(url, options);
         }
 
         async function loadData() {
             try {
-                const r = await apiFetch(`/api/init`);
-                if (!r.ok) {
-                    if(r.status === 403) tg.showAlert("Ошибка 403: Сервер отклонил данные.");
+                const r = await apiFetch("/api/init");
+                if (!r || !r.ok) {
+                    tg.showAlert("Ошибка сервера. Проверьте логи pm2.");
                     return;
                 }
                 const d = await r.json();
-                
                 document.getElementById('user-name').innerText = d.user.name;
                 document.getElementById('avatar').innerText = d.user.name[0].toUpperCase();
-                
-                if (d.user.is_banned) {
-                    document.getElementById('banned-alert').style.display = 'block'; 
-                    document.getElementById('key-card').style.display = 'none';
-                    document.getElementById('status-sub').innerHTML = `<span class="status-badge expired">Забанен</span>`;
-                } else {
-                    document.getElementById('status-sub').innerHTML = d.user.is_active ? `<span class="status-badge">До ${d.user.expiry}</span>` : `<span class="status-badge expired">Истекла</span>`;
-                    document.getElementById('vless-key').value = d.user.key || "";
-                    document.getElementById('btn-gen-key').innerText = d.user.key ? "Обновить" : "Создать ключ";
-                }
-
-                document.getElementById('stat-up').innerText = d.stats.up + " MB"; 
+                document.getElementById('vless-key').value = d.user.key || "";
+                document.getElementById('stat-up').innerText = d.stats.up + " MB";
                 document.getElementById('stat-down').innerText = d.stats.down + " MB";
-                document.getElementById('ref-count').innerText = d.ref.count; 
-                document.getElementById('ref-link').value = d.ref.link;
-                
-                if (d.user.is_admin) { 
-                    document.getElementById('nav-admin').style.display = 'flex'; 
-                    loadAdminData(); 
+
+                if (d.user.is_admin) {
+                    document.getElementById('nav-admin').style.display = 'flex';
+                    loadAdminData();
                 }
-            } catch(e) { 
-                console.error(e); 
-                tg.showAlert("Ошибка связи с сервером. Проверьте туннель."); 
+            } catch (e) {
+                tg.showAlert("Критическая ошибка JS: " + e.message);
             }
         }
 
-        async function generateKey() {
-            if(!confirm("Сгенерировать/сбросить ключ? Старый перестанет работать.")) return;
-            const r = await apiFetch(`/api/user/generate_key`, { method: 'POST' });
-            const d = await r.json();
-            document.getElementById('vless-key').value = d.key; 
-            document.getElementById('btn-gen-key').innerText = "Обновить";
-            tg.showAlert("Ключ готов!");
-        }
-        
-        async function checkStatus() { 
-            try {
-                const r = await apiFetch(`/api/user/status`);
-                const d = await r.json();
-                tg.showAlert(d.status); 
-            } catch(e) {
-                tg.showAlert("Ошибка при запросе статуса.");
-            }
-        }
-
-        // --- АДМИН ЛОГИКА ---
         async function loadAdminData() {
-            const r = await apiFetch(`/api/admin/data`);
+            const r = await apiFetch("/api/admin/data");
             const d = await r.json();
-            adminUsersData = d.users;
-            
-            document.getElementById('server-stats').innerHTML = `Сеть: UP ${d.network.up}MB | DL ${d.network.down}MB<br><br>${d.server.replace(/\n/g, '<br>')}`;
-            renderUsers();
-
-            document.getElementById('static-list').innerHTML = d.statics.map(p => `
-                <div class="card" style="padding:10px; font-size:12px;">
-                    <b>${p.name}</b> <button class="btn btn-danger" style="padding:4px; margin:0; width:auto; float:right;" onclick="apiAction('static','delete',${p.id})">Удалить</button><br>
-                    <input type="text" value="${p.url}" readonly onclick="navigator.clipboard.writeText(this.value); tg.showAlert('Скопировано')">
-                </div>
+            document.getElementById('user-list-container').innerHTML = d.users.map(u => `
+                <div class="card">${u.name} (ID: ${u.id})</div>
             `).join('');
         }
 
-        function renderUsers() {
-            const filter = document.getElementById('user-filter').value;
-            let html = "";
-            adminUsersData.forEach(u => {
-                if(filter === 'active' && !u.is_active) return;
-                if(filter === 'inactive' && u.is_active) return;
-                html += `
-                <div class="card" style="padding:12px; font-size:12px; cursor:pointer; ${u.banned ? 'border-color: var(--red);' : ''}" onclick='openUserModal(${JSON.stringify(u)})'>
-                    <div style="display:flex; justify-content:space-between;">
-                        <b>${u.name}</b> <span style="color:var(--text-dim)">ID: ${u.id}</span>
-                    </div>
-                    <div style="margin-top:5px;">
-                        ${u.banned ? '<span style="color:var(--red)">БАН</span>' : (u.is_active ? `<span style="color:var(--green)">До: ${u.expiry}</span>` : `<span style="color:var(--red)">Истекла: ${u.expiry}</span>`)}
-                        <br><span style="color:var(--text-dim)">@${u.username}</span>
-                    </div>
-                </div>`;
-            });
-            document.getElementById('user-list-container').innerHTML = html || "<p style='text-align:center; color:var(--text-dim)'>Пусто</p>";
+        function switchTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
 
-        function openUserModal(u) {
-            document.getElementById('um-name').innerText = u.name;
-            document.getElementById('um-id').value = u.id;
-            document.getElementById('um-key').value = u.key || 'Нет ключа';
-            document.getElementById('um-ban-btn').innerText = u.banned ? "Разбанить" : "Бан";
-            document.getElementById('um-m').value = 0; document.getElementById('um-d').value = 0;
-            document.getElementById('um-h').value = 0; document.getElementById('um-min').value = 0;
-            document.getElementById('user-modal').classList.add('active');
-        }
-        
-        function closeModal() { document.getElementById('user-modal').classList.remove('active'); }
-
-        async function manageTime(action) {
-            const data = { 
-                action: action, 
-                months: document.getElementById('um-m').value, 
-                days: document.getElementById('um-d').value, 
-                hours: document.getElementById('um-h').value, 
-                minutes: document.getElementById('um-min').value 
-            };
-            await apiFetch(`/api/admin/time/${document.getElementById('um-id').value}`, { 
-                method: 'POST', 
-                body: JSON.stringify(data) 
-            });
-            tg.showAlert("Время обновлено!"); 
-            closeModal(); 
-            loadAdminData();
+        function copyKey() {
+            const copyText = document.getElementById("vless-key");
+            copyText.select();
+            document.execCommand("copy");
+            tg.showAlert("Ключ скопирован!");
         }
 
-        async function toggleBan() {
-            const action = document.getElementById('um-ban-btn').innerText === "Бан" ? "ban" : "unban";
-            await apiAction('ban', action, document.getElementById('um-id').value); 
-            closeModal();
+        function buy(m, p) {
+            tg.sendData(JSON.stringify({action: 'buy', months: m, price: p}));
+            tg.close();
         }
 
-        async function promptReceipt() {
-            let url = prompt("Введите ссылку на чек из приложения 'Мой Налог':");
-            if(url) { 
-                await apiFetch(`/api/admin/action/notify/receipt/${document.getElementById('um-id').value}`, { 
-                    method: 'POST', 
-                    body: JSON.stringify({url}) 
-                }); 
-                tg.showAlert("Чек успешно отправлен юзеру в бот!"); 
-            }
-        }
-
-        async function promptEmail() {
-            let em = prompt("Введите Email получателя:");
-            if(em) { 
-                await apiFetch(`/api/admin/action/notify/email/${document.getElementById('um-id').value}`, { 
-                    method: 'POST', 
-                    body: JSON.stringify({email: em}) 
-                }); 
-                tg.showAlert("Письмо с ключом отправлено!"); 
-            }
-        }
-
-        async function apiAction(obj, action, target) {
-            await apiFetch(`/api/admin/action/${obj}/${action}/${target}`, { method: 'POST' });
-            tg.showAlert("Команда выполнена!"); 
-            loadAdminData();
-        }
-
-        const tpls = {
-            manual: "",
-            discount: "🎉 <b>Специальное предложение!</b>\n\nТолько сейчас отличные скидки на продление подписки. Успейте воспользоваться!",
-            maintenance: "🛠 <b>Технические работы</b>\n\nНа сервере проводятся плановые работы. VPN временно недоступен. Приносим извинения! 🙏",
-            update: "⚡️ <b>Важное обновление!</b>\n\nКонфигурация серверов обновлена. Пожалуйста, зайдите в меню и нажмите «Обновить ключ»."
-        };
-        
-        function applyTemplate() { 
-            document.getElementById('bc-text').value = tpls[document.getElementById('bc-template').value]; 
-        }
-
-        async function sendBroadcast() {
-            const data = { 
-                target: document.getElementById('bc-target').value, 
-                text: document.getElementById('bc-text').value, 
-                btn_name: document.getElementById('bc-btn-name').value, 
-                btn_url: document.getElementById('bc-btn-url').value 
-            };
-            if(!data.text || !confirm("Вы уверены, что хотите запустить рассылку?")) return;
-            
-            await apiFetch(`/api/admin/broadcast`, { 
-                method: 'POST', 
-                body: JSON.stringify(data) 
-            });
-            tg.showAlert("Рассылка успешно завершена!"); 
-            document.getElementById('bc-text').value = '';
-        }
-
-        async function createStatic() {
-            const name = document.getElementById('new-static-name').value;
-            if(!name) return;
-            await apiAction('static', 'create', name); 
-            document.getElementById('new-static-name').value = '';
-        }
-
-        // UI Helpers
-        function switchTab(id, el) { 
-            document.querySelectorAll('.tab-content, .nav-item').forEach(e => e.classList.remove('active')); 
-            document.getElementById(id).classList.add('active'); 
-            el.classList.add('active'); 
-        }
-        
-        function switchAdmin(id, el) { 
-            document.querySelectorAll('#adm-users, #adm-server, #adm-mass').forEach(e => e.style.display = 'none'); 
-            document.querySelectorAll('.admin-tab').forEach(e => e.classList.remove('active')); 
-            document.getElementById(id).style.display = 'block'; 
-            el.classList.add('active'); 
-        }
-        
-        function copyKey() { navigator.clipboard.writeText(document.getElementById('vless-key').value); tg.showAlert("Ключ скопирован!"); }
-        function copyRef() { navigator.clipboard.writeText(document.getElementById('ref-link').value); tg.showAlert("Ссылка скопирована!"); }
-        function buy(m, p) { tg.sendData(JSON.stringify({action: 'buy', months: m, price: p})); tg.close(); }
-
-        // Запуск
-        tg.ready(); 
-        tg.expand(); 
-        setTimeout(() => loadData(), 100); // Страховка для медленного мобильного инета
+        tg.ready();
+        tg.expand();
+        loadData();
     </script>
 </body>
 </html>
