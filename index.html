@@ -293,5 +293,42 @@
             }
         });
     </script>
+
+const API_URL = "https://evyqs.github.io/webapp/";
+
+async function loadUserData() {
+    const initData = window.Telegram.WebApp.initData;
+    
+    try {
+        const response = await fetch(`${API_URL}/user_info`, {
+            headers: {
+                'Authorization': initData
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Обновляем UI данными из нашей базы!
+            document.getElementById('user-name').innerText = data.name;
+            document.getElementById('user-id').innerText = 'ID: ' + data.id;
+            
+            if (data.is_active) {
+                const date = new Date(data.subscription_end).toLocaleDateString();
+                document.querySelector('.status-box').innerHTML = `🟢 Подписка активна до ${date}`;
+            } else {
+                document.querySelector('.status-box').innerHTML = `🔴 Подписка не активна`;
+                document.querySelector('.status-box').style.color = "#ff3b30";
+            }
+        }
+    } catch (error) {
+        console.error("Ошибка загрузки данных:", error);
+    }
+}
+
+// Вызываем при старте
+tg.ready();
+loadUserData();
+
 </body>
 </html>
