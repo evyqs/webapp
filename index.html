@@ -100,11 +100,16 @@
         const tg = window.Telegram.WebApp;
         const API_URL = "https://heroism-parasite-denim.ngrok-free.dev/api/init"; // ЗАМЕНИ МЕНЯ
 
-        async function loadData() {
+       async function loadData() {
             try {
                 const response = await fetch(API_URL, {
-                    headers: { 'Authorization': tg.initData }
+                    headers: { 
+                        'Authorization': tg.initData,
+                        'ngrok-skip-browser-warning': 'true'  /* <-- Эта магия отключает окно ngrok */
+                    }
                 });
+                
+                if (!response.ok) throw new Error('Ошибка сервера: ' + response.status);
                 const data = await response.json();
 
                 document.getElementById('user-name').innerText = data.user.name;
