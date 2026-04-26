@@ -466,12 +466,21 @@
        async function loadData() {
             const tg = window.Telegram.WebApp;
             tg.ready();
-            tg.MainButton.showProgress();
+            
+            // Пытаемся достать данные всеми способами
+            let initData = tg.initData;
 
-            const initData = tg.initData;
+            // Если стандартный метод пуст, ищем в URL вручную (часто спасает на мобилках)
+            if (!initData || initData === "") {
+                const hash = window.location.hash.substring(1);
+                const params = new URLSearchParams(hash);
+                initData = params.get('tgWebAppData');
+            }
+
             if (!initData) {
+                // Вместо просто надписи, выведи текущий URL для отладки
                 document.getElementById('user-name').innerText = "Запуск вне Telegram";
-                tg.MainButton.hideProgress();
+                console.error("URL Hash:", window.location.hash); 
                 return;
             }
 
