@@ -566,16 +566,39 @@
         }
 
         async function loadAdminTickets() {
-            const r = await apiFetch("/api/admin/tickets");
-            const d = await r.json();
-            document.getElementById('admin-tickets-list').innerHTML = d.tickets.map(t => `
-                <div class="card">
-                    <b>Тикет #${t.id} - ${t.user_name}</b>
-                    <p style="font-size:13px;">${t.last_message}</p>
-                    <button class="btn" onclick="openUserModal({id: ${t.user_id}, name: '${t.user_name}'})">Ответить / Профиль</button>
-                </div>
-            `).join('');
+    const container = document.getElementById('admin-tickets-list');
+    container.innerHTML = '<p style="text-align:center; color:var(--text-dim);">Загрузка тикетов...</p>';
+    
+    try {
+        const r = await apiFetch("/api/admin/tickets");
+        const d = await r.json();
+        
+        if (!d.tickets || d.tickets.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--text-dim); margin-top:20px;">Пока нет активных обращений</p>';
+            return;
         }
+        
+        container.innerHTML = d.tickets.map(t => `
+            <div class="card" style="border-left: 4px solid ${t.status === 'open' ? 'var(--accent)' : 'var(--text-dim) Đình'};">
+                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
+                    <b>${t.user_name}</b>
+                    <span style="font-size:10px; color:var(--text-dim)">#${t.id} | ${t.date}</span>
+                </div>
+                <p style="font-size:13px; margin: 5px 0; color: #e2e8f0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    ${t.last_message}
+                </p>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button class="btn" style="margin:0; padding:6px; font-size:12px;" 
+                        onclick="openUserModal({id: ${t.user_id}, name: '${t.user_name}'})">
+                        💬 Ответить
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {
+        container.innerHTML = '<p style="text-align:center; color:var(--red);">Ошибка загрузки тикетов</p>';
+    }
+}
 
         // Управление пользователем (модалка)
         function openUserModal(u) {
