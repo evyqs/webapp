@@ -417,20 +417,51 @@
             return null;
         }
 
-        async function apiFetch(path, options = {}) {
-            const authData = getInitData();
-            if (!authData) {
-                tg.showAlert("Ошибка: Данные авторизации не найдены.");
-                throw new Error("No initData");
+        async function apiFetch() {
+    const tg = window.Telegram.WebApp;
+    
+    // Сообщаем Telegram, что мы готовы (важно для мобилок)
+    tg.ready();
+    tg.expand();
+
+    // На мобильных устройствах initData иногда нужно брать аккуратно
+    const initData = tg.initData;
+
+    if (!initData || initData === "") {
+        console.error("InitData is empty!");
+        // Если ты тестируешь через браузер не в Telegram, 
+        // тут можно вставить заглушку для теста
+        return;
+    }
+
+    // Твой новый надежный адрес
+    const API_URL = "https://babatsiki.ru:8443/api/init";
+
+    try {
+        const response = await fetch(API_URL, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                // Передаем данные именно в заголовке Authorization
+                // Важно: на бэкенде ты должен принимать именно этот заголовок
+                "Authorization": initData 
             }
-            const url = `${API}${path}?auth=${encodeURIComponent(authData)}`;
-            options.headers = { 
-                ...options.headers, 
-                'ngrok-skip-browser-warning': '1', 
-                'Content-Type': 'application/json' 
-            };
-            return fetch(url, options);
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            alert("Ошибка авторизации: сервер не принял данные Telegram.");
+            return;
         }
+
+        const data = await response.json();
+        console.log("Успех:", data);
+        // Тут логика отрисовки твоего интерфейса
+        
+    } catch (error) {
+        console.error("Ошибка запроса:", error);
+        alert("Не удалось соединиться с сервером.");
+    }
+}
 
         async function loadData() {
             try {
